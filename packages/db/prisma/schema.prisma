@@ -1,0 +1,228 @@
+generator client {
+  provider = "prisma-client-js"
+  output   = "../src/generated/client"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// Plans and billing
+
+model Plan {
+  id                String         @id @default(uuid())
+  name              String         @unique // free, pro, enterprise
+  displayName       String         @map("display_name")
+  priceMonthly      Int            @default(0) @map("price_monthly") // cents
+  eventsPerMonth    Int            @map("events_per_month") // hard limit
+  rulesLimit        Int            @map("rules_limit")
+  retentionDays     Int            @map("retention_days")
+  rateLimit         Int            @map("rate_limit") // requests per minute
+  overageRate       Int            @default(0) @map("overage_rate") // cents per 1000 events
+  organizations     Organization[]
+
+  @@map("plans")
+}
+
+// Multi-tenancy models
+
+model User {
+  id                  String               @id @default(uuid())
+  email               String               @unique
+  passwordHash        String               @map("password_hash")
+  name                String?
+  createdAt           DateTime             @default(now()) @map("created_at")
+  updatedAt           DateTime             @updatedAt @map("updated_at")
+  memberships         Membership[]
+  refreshTokens       RefreshToken[]
+  passwordResetTokens PasswordResetToken[]
+
+  @@map("users")
+}
+
+model Organization {
+  id            String         @id @default(uuid())
+  name          String
+  slug          String         @unique
+  plan          Plan           @relation(fields: [planId], references: [id])
+  planId        String         @default("free") @map("plan_id")
+  createdAt     DateTime       @default(now()) @map("created_at")
+  updatedAt     DateTime       @updatedAt @map("updated_at")
+  memberships   Membership[]
+  apiKeys       ApiKey[]
+  events        Event[]
+  rules         Rule[]
+  notifications Notification[]
+  usage         Usage[]
+  invites       Invite[]
+
+  @@map("organizations")
+}
+
+model Membership {
+  id        String   @id @default(uuid())
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId    String   @map("user_id")
+  org       Organization @relation(fields: [orgId], references: [id], onDelete: Cascade)
+  orgId     String   @map("org_id")
+  role      String   @default("member") // owner, admin, member
+  createdAt DateTime @default(now()) @map("created_at")
+
+  @@unique([userId, orgId])
+  @@index([orgId])
+  @@map("memberships")
+}
+
+// Core models (now with org isolation)
+
+model Event {
+  id            String         @id @default(uuid())
+  org           Organization   @relation(fields: [orgId], references: [id], onDelete: Cascade)
+  orgId         String         @map("org_id")
+  type          String
+  metadata      Json           @default("{}")
+  timestamp     DateTime       @default(now())
+  processed     Boolean        @default(false)
+  createdAt     DateTime       @default(now()) @map("created_at")
+  notifications Notification[]
+
+  @@index([orgId, type])
+  @@index([orgId, timestamp])
+  @@index([processed])
+  @@map("events")
+}
+
+model Rule {
+  id              String         @id @default(uuid())
+  org             Organization   @relation(fields: [orgId], references: [id], onDelete: Cascade)
+  orgId           String         @map("org_id")
+  name            String
+  eventType       String         @map("event_type")
+  condition       String
+  threshold       Int
+  windowSeconds   Int            @map("window_seconds")
+  cooldownSeconds Int            @default(60) @map("cooldown_seconds")
+  actions         Json
+  enabled         Boolean        @default(true)
+  createdAt       DateTime       @default(now()) @map("created_at")
+  updatedAt       DateTime       @updatedAt @map("updated_at")
+  notifications   Notification[]
+
+  @@index([orgId, eventType])
+  @@index([orgId, enabled])
+  @@map("rules")
+}
+
+model Notification {
+  id        String       @id @default(uuid())
+  org       Organization @relation(fields: [orgId], references: [id], onDelete: Cascade)
+  orgId     String       @map("org_id")
+  rule      Rule         @relation(fields: [ruleId], references: [id], onDelete: Cascade)
+  ruleId    String       @map("rule_id")
+  event     Event        @relation(fields: [eventId], references: [id], onDelete: Cascade)
+  eventId   String       @map("event_id")
+  channel   String
+  payload   Json
+  status    String       @default("pending")
+  sentAt    DateTime?    @map("sent_at")
+  error     String?
+  createdAt DateTime     @default(now()) @map("created_at")
+
+  @@index([orgId, status])
+  @@index([orgId, channel])
+  @@map("notifications")
+}
+
+model ApiKey {
+  id         String       @id @default(uuid())
+  org        Organization @relation(fields: [orgId], references: [id], onDelete: Cascade)
+  orgId      String       @map("org_id")
+  keyHash    String       @unique @map("key_hash")
+  prefix     String
+  name       String
+  expiresAt  DateTime?    @map("expires_at")
+  lastUsedAt DateTime?    @map("last_used_at")
+  createdAt  DateTime     @default(now()) @map("created_at")
+
+  @@index([orgId])
+  @@map("api_keys")
+}
+
+model RefreshToken {
+  id        String    @id @default(uuid())
+  tokenHash String    @unique @map("token_hash")
+  user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId    String    @map("user_id")
+  orgId     String    @map("org_id")
+  expiresAt DateTime  @map("expires_at")
+  revokedAt DateTime? @map("revoked_at")
+  createdAt DateTime  @default(now()) @map("created_at")
+
+  @@index([userId])
+  @@map("refresh_tokens")
+}
+
+model PasswordResetToken {
+  id        String    @id @default(uuid())
+  tokenHash String    @unique @map("token_hash")
+  user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId    String    @map("user_id")
+  expiresAt DateTime  @map("expires_at")
+  usedAt    DateTime? @map("used_at")
+  createdAt DateTime  @default(now()) @map("created_at")
+
+  @@index([userId])
+  @@map("password_reset_tokens")
+}
+
+model Invite {
+  id         String       @id @default(uuid())
+  email      String
+  org        Organization @relation(fields: [orgId], references: [id], onDelete: Cascade)
+  orgId      String       @map("org_id")
+  role       String       @default("member")
+  invitedBy  String       @map("invited_by")
+  token      String       @unique
+  expiresAt  DateTime     @map("expires_at")
+  acceptedAt DateTime?    @map("accepted_at")
+  createdAt  DateTime     @default(now()) @map("created_at")
+
+  @@index([orgId])
+  @@index([email])
+  @@map("invites")
+}
+
+// Usage tracking
+
+model Usage {
+  id           String       @id @default(uuid())
+  org          Organization @relation(fields: [orgId], references: [id], onDelete: Cascade)
+  orgId        String       @map("org_id")
+  periodStart  DateTime     @map("period_start") // first day of month
+  periodEnd    DateTime     @map("period_end") // last day of month
+  eventsCount  Int          @default(0) @map("events_count")
+  rulesCount   Int          @default(0) @map("rules_count")
+  notifCount   Int          @default(0) @map("notif_count")
+  overageEvents Int         @default(0) @map("overage_events") // events above plan limit
+  updatedAt    DateTime     @updatedAt @map("updated_at")
+
+  @@unique([orgId, periodStart])
+  @@index([periodStart])
+  @@map("usage")
+}
+
+// System alerts for anomaly detection
+
+model SystemAlert {
+  id        String   @id @default(uuid())
+  orgId     String?  @map("org_id") // null for system-wide alerts
+  type      String   // usage_spike, rate_limit_hit, error_spike
+  message   String
+  metadata  Json     @default("{}")
+  resolved  Boolean  @default(false)
+  createdAt DateTime @default(now()) @map("created_at")
+
+  @@index([resolved, createdAt])
+  @@map("system_alerts")
+}
