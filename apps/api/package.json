@@ -1,0 +1,29 @@
+{
+  "name": "@signaldesk/api",
+  "version": "0.0.1",
+  "type": "module",
+  "scripts": {
+    "dev": "bun --watch src/index.ts",
+    "build": "bun build src/index.ts --outdir dist --target node",
+    "start": "bun src/index.ts",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@fastify/cookie": "^11",
+    "@fastify/cors": "^10",
+    "@fastify/jwt": "^9",
+    "@fastify/rate-limit": "^10",
+    "@fastify/websocket": "^11",
+    "@signaldesk/db": "workspace:*",
+    "@signaldesk/queue": "workspace:*",
+    "@signaldesk/shared": "workspace:*",
+    "fastify": "^5",
+    "fastify-plugin": "^5",
+    "ioredis": "^5.9.2",
+    "pino-pretty": "^13"
+  },
+  "devDependencies": {
+    "@types/jsonwebtoken": "^9.0.10",
+    "@types/ws": "^8"
+  }
+}
