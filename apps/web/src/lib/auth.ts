@@ -1,0 +1,158 @@
+const API_URL = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:3001";
+
+export interface User {
+  id: string;
+  email: string;
+  name: string | null;
+}
+
+export interface Org {
+  id: string;
+  name: string;
+  slug: string;
+  role?: string;
+}
+
+export interface AuthResponse {
+  accessToken: string;
+  refreshToken: string;
+  user: User;
+  org: Org;
+}
+
+export async function signup(data: {
+  email: string;
+  password: string;
+  name?: string;
+  orgName?: string;
+  inviteToken?: string;
+}): Promise<AuthResponse> {
+  const response = await fetch(`${API_URL}/auth/signup`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(data),
+  });
+
+  if (!response.ok) {
+    const error = await response.json().catch(() => ({ error: "Signup failed" }));
+    throw new Error(error.error ?? "Signup failed");
+  }
+
+  return response.json();
+}
+
+export async function login(data: {
+  email: string;
+  password: string;
+}): Promise<AuthResponse> {
+  const response = await fetch(`${API_URL}/auth/login`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(data),
+  });
+
+  if (!response.ok) {
+    const error = await response.json().catch(() => ({ error: "Login failed" }));
+    throw new Error(error.error ?? "Login failed");
+  }
+
+  return response.json();
+}
+
+export async function getMe(token: string): Promise<{ user: User; org: Org | null }> {
+  const response = await fetch(`${API_URL}/auth/me`, {
+    headers: { Authorization: `Bearer ${token}` },
+  });
+
+  if (!response.ok) {
+    throw new Error("Unauthorized");
+  }
+
+  return response.json();
+}
+
+export async function refreshAccessToken(
+  token: string
+): Promise<{ accessToken: string; refreshToken: string }> {
+  const response = await fetch(`${API_URL}/auth/refresh`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ refreshToken: token }),
+  });
+
+  if (!response.ok) {
+    throw new Error("Refresh failed");
+  }
+
+  return response.json();
+}
+
+export async function logoutApi(token: string): Promise<void> {
+  await fetch(`${API_URL}/auth/logout`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ refreshToken: token }),
+  }).catch(() => {});
+}
+
+export async function forgotPassword(email: string): Promise<{ message: string }> {
+  const response = await fetch(`${API_URL}/auth/forgot-password`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ email }),
+  });
+
+  if (!response.ok) {
+    const error = await response.json().catch(() => ({ error: "Request failed" }));
+    throw new Error(error.error ?? "Request failed");
+  }
+
+  return response.json();
+}
+
+export async function resetPassword(token: string, password: string): Promise<{ message: string }> {
+  const response = await fetch(`${API_URL}/auth/reset-password`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ token, password }),
+  });
+
+  if (!response.ok) {
+    const error = await response.json().catch(() => ({ error: "Reset failed" }));
+    throw new Error(error.error ?? "Reset failed");
+  }
+
+  return response.json();
+}
+
+export interface AcceptInviteResponse {
+  needsSignup: boolean;
+  email?: string;
+  orgName?: string;
+  inviteToken?: string;
+  membership?: { orgId: string; role: string };
+  org?: Org;
+}
+
+export async function acceptInvite(
+  token: string,
+  accessToken?: string
+): Promise<AcceptInviteResponse> {
+  const headers: Record<string, string> = { "Content-Type": "application/json" };
+  if (accessToken) {
+    headers["Authorization"] = `Bearer ${accessToken}`;
+  }
+
+  const response = await fetch(`${API_URL}/auth/accept-invite`, {
+    method: "POST",
+    headers,
+    body: JSON.stringify({ token }),
+  });
+
+  if (!response.ok) {
+    const error = await response.json().catch(() => ({ error: "Failed to accept invite" }));
+    throw new Error(error.error ?? "Failed to accept invite");
+  }
+
+  return response.json();
+}
