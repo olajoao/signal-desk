@@ -72,7 +72,7 @@ GET  /notifications   # List notifications
 POST /api-keys        # Create API key
 GET  /api-keys        # List API keys
 DELETE /api-keys/:id  # Delete API key
-GET  /ws              # WebSocket (no auth)
+GET  /ws?token=<jwt>  # WebSocket (JWT required)
 GET  /health          # Health check (no auth)
 ```
 

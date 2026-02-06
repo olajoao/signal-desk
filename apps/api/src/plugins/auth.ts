@@ -23,7 +23,6 @@ declare module "@fastify/jwt" {
 
 const PUBLIC_ROUTES = [
   "/health",
-  "/ws",
   "/auth/signup",
   "/auth/login",
   "/auth/refresh",

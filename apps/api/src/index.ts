@@ -51,9 +51,22 @@ async function start() {
     wsClients: getClientCount(),
   }));
 
-  // WebSocket endpoint (before auth)
-  fastify.get("/ws", { websocket: true }, (socket) => {
-    addClient(socket);
+  // WebSocket endpoint (JWT-authenticated)
+  fastify.get("/ws", { websocket: true }, (socket, request) => {
+    const { token } = request.query as { token?: string };
+    if (!token) {
+      socket.send(JSON.stringify({ type: "error", payload: { message: "Token required" } }));
+      socket.close(4401, "Unauthorized");
+      return;
+    }
+
+    try {
+      const decoded = fastify.jwt.verify<{ userId: string; orgId: string; role: string }>(token);
+      addClient(decoded.orgId, socket);
+    } catch {
+      socket.send(JSON.stringify({ type: "error", payload: { message: "Invalid token" } }));
+      socket.close(4401, "Unauthorized");
+    }
   });
 
   // Auth routes (before auth plugin, some are public)

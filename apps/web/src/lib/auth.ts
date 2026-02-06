@@ -35,7 +35,7 @@ export async function signup(data: {
 
   if (!response.ok) {
     const error = await response.json().catch(() => ({ error: "Signup failed" }));
-    throw new Error(error.error ?? "Signup failed");
+    throw new Error(error.message ?? error.error ?? "Signup failed");
   }
 
   return response.json();
@@ -53,7 +53,7 @@ export async function login(data: {
 
   if (!response.ok) {
     const error = await response.json().catch(() => ({ error: "Login failed" }));
-    throw new Error(error.error ?? "Login failed");
+    throw new Error(error.message ?? error.error ?? "Login failed");
   }
 
   return response.json();
@@ -92,7 +92,7 @@ export async function logoutApi(token: string): Promise<void> {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ refreshToken: token }),
-  }).catch(() => {});
+  }).catch(() => { });
 }
 
 export async function forgotPassword(email: string): Promise<{ message: string }> {
@@ -104,7 +104,7 @@ export async function forgotPassword(email: string): Promise<{ message: string }
 
   if (!response.ok) {
     const error = await response.json().catch(() => ({ error: "Request failed" }));
-    throw new Error(error.error ?? "Request failed");
+    throw new Error(error.message ?? error.error ?? "Request failed");
   }
 
   return response.json();
@@ -119,7 +119,7 @@ export async function resetPassword(token: string, password: string): Promise<{ 
 
   if (!response.ok) {
     const error = await response.json().catch(() => ({ error: "Reset failed" }));
-    throw new Error(error.error ?? "Reset failed");
+    throw new Error(error.message ?? error.error ?? "Reset failed");
   }
 
   return response.json();
@@ -151,7 +151,7 @@ export async function acceptInvite(
 
   if (!response.ok) {
     const error = await response.json().catch(() => ({ error: "Failed to accept invite" }));
-    throw new Error(error.error ?? "Failed to accept invite");
+    throw new Error(error.message ?? error.error ?? "Failed to accept invite");
   }
 
   return response.json();

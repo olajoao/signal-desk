@@ -1,4 +1,5 @@
 import { Worker, type Job } from "bullmq";
+import Redis from "ioredis";
 import { prisma } from "@signaldesk/db";
 import { getRedisConnection, type NotificationJobData } from "@signaldesk/queue";
 
@@ -60,9 +61,11 @@ async function sendDiscord(webhookUrl: string, payload: Record<string, unknown>)
   }
 }
 
-async function broadcastToWebSocket(notificationId: string, payload: Record<string, unknown>): Promise<void> {
-  // In production, this would use Redis pub/sub to communicate with the API server
-  console.log(`[WS Broadcast] Notification ${notificationId}:`, JSON.stringify(payload));
+const publisher = new Redis(process.env.REDIS_URL ?? "redis://localhost:6379");
+
+async function broadcastToWebSocket(orgId: string, notificationId: string, payload: Record<string, unknown>): Promise<void> {
+  const message = JSON.stringify({ type: "notification:new", payload: { ...payload, notificationId } });
+  await publisher.publish(`ws:broadcast:${orgId}`, message);
 }
 
 async function processNotification(job: Job<NotificationJobData>): Promise<void> {
@@ -82,7 +85,7 @@ async function processNotification(job: Job<NotificationJobData>): Promise<void>
       }
       await sendDiscord(config.webhookUrl, payload);
     } else if (channel === "in_app") {
-      await broadcastToWebSocket(notificationId, payload);
+      await broadcastToWebSocket(job.data.orgId, notificationId, payload);
     }
 
     // Mark as sent

@@ -15,6 +15,7 @@ interface AuthState {
 interface AuthContextValue extends AuthState {
   setAuth: (accessToken: string, refreshToken: string, user: User, org: Org) => void;
   logout: () => void;
+  refreshAuth: () => Promise<string | null>;
 }
 
 const AuthContext = createContext<AuthContextValue | null>(null);
@@ -77,6 +78,20 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setState({ token: accessToken, user, org, isLoading: false });
   };
 
+  const refreshAuth = async (): Promise<string | null> => {
+    const rt = localStorage.getItem("refreshToken");
+    if (!rt) return null;
+    try {
+      const refreshed = await refreshAccessToken(rt);
+      localStorage.setItem("token", refreshed.accessToken);
+      localStorage.setItem("refreshToken", refreshed.refreshToken);
+      setState((s) => ({ ...s, token: refreshed.accessToken }));
+      return refreshed.accessToken;
+    } catch {
+      return null;
+    }
+  };
+
   const logout = () => {
     const rt = localStorage.getItem("refreshToken");
     if (rt) logoutApi(rt);
@@ -87,7 +102,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   };
 
   return (
-    <AuthContext.Provider value={{ ...state, setAuth, logout }}>
+    <AuthContext.Provider value={{ ...state, setAuth, logout, refreshAuth }}>
       {children}
     </AuthContext.Provider>
   );

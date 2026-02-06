@@ -7,7 +7,7 @@ import { useWebSocket } from "@/hooks/use-websocket";
 import { useAuth } from "@/components/auth-provider";
 
 export default function DashboardPage() {
-  const { token, isLoading: authLoading } = useAuth();
+  const { token, isLoading: authLoading, refreshAuth } = useAuth();
   const [liveEvents, setLiveEvents] = useState<EventItem[]>([]);
 
   const { data, isLoading } = useQuery({
@@ -23,7 +23,7 @@ export default function DashboardPage() {
     }
   }, []);
 
-  const { isConnected } = useWebSocket(handleMessage);
+  const { isConnected } = useWebSocket(token, handleMessage, refreshAuth);
 
   if (authLoading || !token) {
     return <div className="text-gray-400">Loading...</div>;

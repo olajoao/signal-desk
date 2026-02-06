@@ -58,7 +58,7 @@ export async function eventRoutes(fastify: FastifyInstance) {
     });
 
     // Broadcast to connected clients
-    broadcast({
+    broadcast(request.orgId, {
       type: "event:new",
       payload: {
         id: event.id,

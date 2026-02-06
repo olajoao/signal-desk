@@ -11,15 +11,17 @@ type MessageHandler = (message: WsMessage) => void;
 
 const WS_URL = process.env.NEXT_PUBLIC_WS_URL ?? "ws://localhost:3001/ws";
 
-export function useWebSocket(onMessage: MessageHandler) {
+export function useWebSocket(token: string | null, onMessage: MessageHandler, onAuthError?: () => void) {
   const wsRef = useRef<WebSocket | null>(null);
   const [isConnected, setIsConnected] = useState(false);
   const reconnectTimeoutRef = useRef<NodeJS.Timeout>(undefined);
 
   const connect = useCallback(() => {
+    if (!token) return;
     if (wsRef.current?.readyState === WebSocket.OPEN) return;
 
-    const ws = new WebSocket(WS_URL);
+    const url = `${WS_URL}?token=${encodeURIComponent(token)}`;
+    const ws = new WebSocket(url);
 
     ws.onopen = () => {
       setIsConnected(true);
@@ -34,9 +36,12 @@ export function useWebSocket(onMessage: MessageHandler) {
       }
     };
 
-    ws.onclose = () => {
+    ws.onclose = (event) => {
       setIsConnected(false);
-      // Reconnect after 3 seconds
+      if (event.code === 4401 && onAuthError) {
+        onAuthError();
+        return;
+      }
       reconnectTimeoutRef.current = setTimeout(connect, 3000);
     };
 
@@ -45,7 +50,7 @@ export function useWebSocket(onMessage: MessageHandler) {
     };
 
     wsRef.current = ws;
-  }, [onMessage]);
+  }, [token, onMessage]);
 
   useEffect(() => {
     connect();
