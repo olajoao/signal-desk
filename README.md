@@ -48,7 +48,7 @@ Think: GitHub notifications + Datadog events + Slack alerts — simplified and o
 - **Event Ingestion** — High-throughput API with rate limiting and schema validation
 - **Rule Engine** — User-defined rules with sliding window, thresholds, and cooldowns
 - **Async Processing** — BullMQ workers with configurable concurrency
-- **Real-time UI** — WebSocket-powered live event feed and notifications
+- **Real-time UI** — WebSocket-powered live event feed, alert stream, and stat cards
 - **API Key Auth** — Secure access with usage tracking
 
 ## Quick Start
@@ -135,9 +135,16 @@ signaldesk/
 - **Rule evaluation**: Cache active rules, partition by event type
 - **WebSocket**: Redis pub/sub for multi-instance broadcast
 
+## Bugs Found & Fixed
+
+| Bug | Root Cause | Fix |
+|-----|-----------|-----|
+| WS connection always fails | `fp()` auth plugin applies `onRequest` globally; `/ws` not in `PUBLIC_ROUTES` so upgrade rejected with 401 | Added `/ws` to `PUBLIC_ROUTES` |
+| "WebSocket closed before connection established" warning | React StrictMode double-invokes effects; cleanup called `.close()` on CONNECTING socket | Defer close via `onopen` callback, null out handlers on cleanup |
+
 ## Future Improvements
 
-- [ ] OAuth/JWT authentication
+- [x] JWT authentication (access + refresh tokens, org-scoped)
 - [ ] Slack/Email notification channels
 - [ ] ClickHouse for event analytics
 - [ ] Terraform + CI/CD pipeline

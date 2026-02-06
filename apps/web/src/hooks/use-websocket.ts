@@ -18,7 +18,7 @@ export function useWebSocket(token: string | null, onMessage: MessageHandler, on
 
   const connect = useCallback(() => {
     if (!token) return;
-    if (wsRef.current?.readyState === WebSocket.OPEN) return;
+    if (wsRef.current?.readyState === WebSocket.OPEN || wsRef.current?.readyState === WebSocket.CONNECTING) return;
 
     const url = `${WS_URL}?token=${encodeURIComponent(token)}`;
     const ws = new WebSocket(url);
@@ -57,7 +57,18 @@ export function useWebSocket(token: string | null, onMessage: MessageHandler, on
 
     return () => {
       clearTimeout(reconnectTimeoutRef.current);
-      wsRef.current?.close();
+      const ws = wsRef.current;
+      if (ws) {
+        ws.onmessage = null;
+        ws.onclose = null;
+        ws.onerror = null;
+        if (ws.readyState === WebSocket.CONNECTING) {
+          ws.onopen = () => ws.close();
+        } else {
+          ws.close();
+        }
+        wsRef.current = null;
+      }
     };
   }, [connect]);
 
