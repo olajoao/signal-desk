@@ -35,7 +35,7 @@ export default function ForgotPasswordPage() {
 
         {sent ? (
           <div className="p-4 bg-green-500/10 border border-green-500/20 rounded text-green-400 text-sm">
-            If an account exists for {email}, a reset token has been generated. Check the server console.
+            If an account exists for {email}, a reset link has been sent. Check your inbox.
             <div className="mt-4">
               <Link href="/login" className="text-blue-400 hover:text-blue-300">
                 Back to login

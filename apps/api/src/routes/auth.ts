@@ -11,6 +11,7 @@ import {
   AcceptInviteSchema,
 } from "@signaldesk/shared";
 import { requireRole } from "../plugins/rbac.ts";
+import { sendPasswordResetEmail, sendInviteEmail } from "../services/email.ts";
 
 function generateSlug(name: string): string {
   return name
@@ -289,7 +290,7 @@ export async function authRoutes(fastify: FastifyInstance) {
         data: { tokenHash, userId: user.id, expiresAt },
       });
 
-      console.log(`[RESET] Token for ${parsed.data.email}: ${token}`);
+      await sendPasswordResetEmail(parsed.data.email, token);
     }
 
     return reply.send({ message: "If an account exists, a reset link has been generated" });
@@ -365,7 +366,8 @@ export async function authRoutes(fastify: FastifyInstance) {
       },
     });
 
-    console.log(`[INVITE] ${parsed.data.email} → token: ${token}`);
+    const org = await prisma.organization.findUniqueOrThrow({ where: { id: request.orgId } });
+    await sendInviteEmail(parsed.data.email, token, org.name);
 
     return reply.status(201).send({
       id: invite.id,

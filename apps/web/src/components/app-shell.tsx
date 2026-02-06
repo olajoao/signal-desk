@@ -5,7 +5,7 @@ import { useEffect } from "react";
 import { Sidebar } from "./sidebar";
 import { useAuth } from "./auth-provider";
 
-const PUBLIC_PATHS = ["/", "/login", "/signup"];
+const PUBLIC_PATHS = ["/", "/login", "/signup", "/forgot-password", "/reset-password", "/invite/accept"];
 
 export function AppShell({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
