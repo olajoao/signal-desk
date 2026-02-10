@@ -5,6 +5,7 @@ import { useState } from "react";
 import {
   getApiKeys, createApiKey, deleteApiKey, getUsage, getPlans,
   getMembers, inviteMember, removeMember,
+  createCheckoutSession, getBillingPortal,
 } from "@/lib/api";
 import { useAuth } from "@/components/auth-provider";
 
@@ -77,6 +78,20 @@ export default function SettingsPage() {
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ["members"] }),
   });
 
+  const checkoutMutation = useMutation({
+    mutationFn: (planId: string) => createCheckoutSession(token!, planId),
+    onSuccess: (data) => {
+      window.location.href = data.url;
+    },
+  });
+
+  const portalMutation = useMutation({
+    mutationFn: () => getBillingPortal(token!),
+    onSuccess: (data) => {
+      window.location.href = data.url;
+    },
+  });
+
   if (authLoading || !token) return <div className="text-gray-400">Loading...</div>;
 
   const usage = usageData?.usage;
@@ -96,6 +111,15 @@ export default function SettingsPage() {
               <span className="text-sm px-2 py-1 bg-blue-500/20 text-blue-400 rounded">
                 {plan?.name}
               </span>
+              {plan?.id !== "free" && (
+                <button
+                  onClick={() => portalMutation.mutate()}
+                  disabled={portalMutation.isPending}
+                  className="text-sm text-gray-400 hover:text-white"
+                >
+                  {portalMutation.isPending ? "Loading..." : "Manage Billing"}
+                </button>
+              )}
               <button
                 onClick={() => setShowPlans(!showPlans)}
                 className="text-sm text-gray-400 hover:text-white"
@@ -205,12 +229,23 @@ export default function SettingsPage() {
                   <div>{p.retentionDays} days retention</div>
                   <div>{p.rateLimit} req/min</div>
                 </div>
+                {p.id !== plan?.id && p.id !== "free" && (
+                  <button
+                    onClick={() => checkoutMutation.mutate(p.id)}
+                    disabled={checkoutMutation.isPending}
+                    className="mt-3 w-full bg-[var(--primary)] text-white px-4 py-2 rounded text-sm hover:bg-[var(--primary)]/80 disabled:opacity-50"
+                  >
+                    {checkoutMutation.isPending ? "Redirecting..." : `Upgrade to ${p.displayName}`}
+                  </button>
+                )}
               </div>
             ))}
           </div>
-          <p className="text-xs text-gray-500 mt-4">
-            Contact us to upgrade your plan or for enterprise pricing.
-          </p>
+          {checkoutMutation.isError && (
+            <p className="text-xs text-red-400 mt-4">
+              {checkoutMutation.error instanceof Error ? checkoutMutation.error.message : "Checkout failed"}
+            </p>
+          )}
         </div>
       )}
 

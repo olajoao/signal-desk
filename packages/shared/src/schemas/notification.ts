@@ -1,7 +1,7 @@
 import { z } from "zod";
 
 export const NotificationStatusSchema = z.enum(["pending", "sent", "failed"]);
-export const NotificationChannelSchema = z.enum(["webhook", "discord", "in_app"]);
+export const NotificationChannelSchema = z.enum(["webhook", "discord", "in_app", "slack", "email"]);
 
 export const NotificationSchema = z.object({
   id: z.string().uuid(),

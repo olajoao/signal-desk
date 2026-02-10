@@ -121,7 +121,7 @@ async function processEvent(job: Job<EventJobData>): Promise<void> {
         notificationId: notification.id,
         ruleId: rule.id,
         eventId,
-        channel: action.channel as "webhook" | "in_app",
+        channel: action.channel as "webhook" | "discord" | "in_app" | "slack" | "email",
         payload: notification.payload as Record<string, unknown>,
         orgId,
       });

@@ -12,6 +12,7 @@ import {
 } from "@/lib/api";
 import { useWebSocket } from "@/hooks/use-websocket";
 import { useAuth } from "@/components/auth-provider";
+import { OnboardingChecklist } from "@/components/onboarding-checklist";
 
 interface LiveNotification {
   notificationId: string;
@@ -206,8 +207,37 @@ export default function DashboardPage() {
         </div>
       </div>
 
+      {/* Usage Warning Banners */}
+      {usageData && usageData.usage.events.percentUsed >= 80 && (
+        <div
+          className={`rounded-lg p-3 mb-6 text-sm ${
+            usageData.usage.events.percentUsed >= 100
+              ? "bg-red-500/10 border border-red-500/20 text-red-400"
+              : "bg-yellow-500/10 border border-yellow-500/20 text-yellow-400"
+          }`}
+        >
+          {usageData.usage.events.percentUsed >= 100 ? (
+            <span>
+              Event limit reached ({usageData.usage.events.limit.toLocaleString()}).{" "}
+              <a href="/settings" className="underline font-medium">Upgrade your plan</a> to continue.
+            </span>
+          ) : (
+            <span>
+              {usageData.usage.events.remaining.toLocaleString()} events remaining this month ({usageData.usage.events.percentUsed}% used).
+            </span>
+          )}
+        </div>
+      )}
+
+      {/* Onboarding */}
+      <OnboardingChecklist
+        hasApiKey={(eventsData?.events.length ?? 0) > 0 || liveEvents.length > 0}
+        hasRule={(rulesData?.rules.length ?? 0) > 0}
+        hasEvent={(eventsData?.events.length ?? 0) > 0 || liveEvents.length > 0}
+      />
+
       {/* Stat Cards */}
-      <div className="grid grid-cols-3 gap-4 mb-6">
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-6">
         <StatCard label="Events (period)" value={eventsUsed} accent="primary" />
         <StatCard label="Active Rules" value={activeRules} accent="success" />
         <StatCard label="Notifications" value={notifCount} accent="warning" />

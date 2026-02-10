@@ -3,7 +3,7 @@ import { z } from "zod";
 export const RuleConditionSchema = z.enum(["count_gte", "count_gt", "count_eq"]);
 
 export const RuleActionSchema = z.object({
-  channel: z.enum(["webhook", "discord", "in_app"]),
+  channel: z.enum(["webhook", "discord", "in_app", "slack", "email"]),
   config: z.record(z.string(), z.unknown()),
 });
 

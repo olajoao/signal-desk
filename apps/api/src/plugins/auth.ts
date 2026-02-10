@@ -32,6 +32,7 @@ const PUBLIC_ROUTES = [
   "/auth/reset-password",
   "/auth/accept-invite",
   "/plans",
+  "/billing/webhook",
 ];
 
 function hashApiKey(key: string): string {

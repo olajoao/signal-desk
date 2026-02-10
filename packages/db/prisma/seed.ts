@@ -13,6 +13,7 @@ const plans = [
     retentionDays: 7,
     rateLimit: 60, // 60 req/min
     overageRate: 0, // no overage allowed
+    stripePriceId: null,
   },
   {
     id: "pro",
@@ -24,6 +25,7 @@ const plans = [
     retentionDays: 30,
     rateLimit: 300, // 300 req/min
     overageRate: 200, // $2 per 1000 events
+    stripePriceId: process.env.STRIPE_PRO_PRICE_ID ?? null,
   },
   {
     id: "enterprise",
@@ -35,6 +37,7 @@ const plans = [
     retentionDays: 90,
     rateLimit: 1000, // 1000 req/min
     overageRate: 100, // $1 per 1000 events
+    stripePriceId: process.env.STRIPE_ENTERPRISE_PRICE_ID ?? null,
   },
 ];
 

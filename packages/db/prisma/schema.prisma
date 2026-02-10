@@ -20,6 +20,7 @@ model Plan {
   retentionDays     Int            @map("retention_days")
   rateLimit         Int            @map("rate_limit") // requests per minute
   overageRate       Int            @default(0) @map("overage_rate") // cents per 1000 events
+  stripePriceId     String?        @unique @map("stripe_price_id")
   organizations     Organization[]
 
   @@map("plans")
@@ -42,20 +43,24 @@ model User {
 }
 
 model Organization {
-  id            String         @id @default(uuid())
-  name          String
-  slug          String         @unique
-  plan          Plan           @relation(fields: [planId], references: [id])
-  planId        String         @default("free") @map("plan_id")
-  createdAt     DateTime       @default(now()) @map("created_at")
-  updatedAt     DateTime       @updatedAt @map("updated_at")
-  memberships   Membership[]
-  apiKeys       ApiKey[]
-  events        Event[]
-  rules         Rule[]
-  notifications Notification[]
-  usage         Usage[]
-  invites       Invite[]
+  id                    String         @id @default(uuid())
+  name                  String
+  slug                  String         @unique
+  plan                  Plan           @relation(fields: [planId], references: [id])
+  planId                String         @default("free") @map("plan_id")
+  stripeCustomerId      String?        @unique @map("stripe_customer_id")
+  stripeSubscriptionId  String?        @unique @map("stripe_subscription_id")
+  stripePriceId         String?        @map("stripe_price_id")
+  billingEmail          String?        @map("billing_email")
+  createdAt             DateTime       @default(now()) @map("created_at")
+  updatedAt             DateTime       @updatedAt @map("updated_at")
+  memberships           Membership[]
+  apiKeys               ApiKey[]
+  events                Event[]
+  rules                 Rule[]
+  notifications         Notification[]
+  usage                 Usage[]
+  invites               Invite[]
 
   @@map("organizations")
 }

@@ -2,6 +2,7 @@ import { Worker, type Job } from "bullmq";
 import Redis from "ioredis";
 import { prisma } from "@signaldesk/db";
 import { getRedisConnection, type NotificationJobData } from "@signaldesk/queue";
+import { Resend } from "resend";
 
 interface WebhookConfig {
   url: string;
@@ -10,6 +11,14 @@ interface WebhookConfig {
 
 interface DiscordConfig {
   webhookUrl: string;
+}
+
+interface SlackConfig {
+  webhookUrl: string;
+}
+
+interface EmailConfig {
+  to: string;
 }
 
 async function sendWebhook(url: string, payload: Record<string, unknown>, headers?: Record<string, string>): Promise<void> {
@@ -61,6 +70,98 @@ async function sendDiscord(webhookUrl: string, payload: Record<string, unknown>)
   }
 }
 
+async function sendSlack(webhookUrl: string, payload: Record<string, unknown>): Promise<void> {
+  const ruleName = payload.ruleName as string;
+  const eventType = payload.eventType as string;
+  const count = payload.count as number;
+  const threshold = payload.threshold as number;
+  const windowSeconds = payload.windowSeconds as number;
+  const metadata = payload.eventMetadata as Record<string, unknown>;
+
+  const slackPayload = {
+    blocks: [
+      {
+        type: "header",
+        text: { type: "plain_text", text: `Alert: ${ruleName}` },
+      },
+      {
+        type: "section",
+        fields: [
+          { type: "mrkdwn", text: `*Event Type*\n\`${eventType}\`` },
+          { type: "mrkdwn", text: `*Count*\n${count} / ${threshold}` },
+          { type: "mrkdwn", text: `*Window*\n${windowSeconds}s` },
+          { type: "mrkdwn", text: `*Time*\n${new Date().toISOString()}` },
+        ],
+      },
+      {
+        type: "section",
+        text: {
+          type: "mrkdwn",
+          text: `*Metadata*\n\`\`\`${JSON.stringify(metadata, null, 2)}\`\`\``,
+        },
+      },
+      {
+        type: "context",
+        elements: [{ type: "mrkdwn", text: "Sent by *SignalDesk*" }],
+      },
+    ],
+  };
+
+  const response = await fetch(webhookUrl, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(slackPayload),
+  });
+
+  if (!response.ok) {
+    throw new Error(`Slack webhook failed: ${response.status} ${response.statusText}`);
+  }
+}
+
+async function sendAlertEmail(to: string, payload: Record<string, unknown>): Promise<void> {
+  const apiKey = process.env.RESEND_API_KEY;
+  const from = process.env.EMAIL_FROM ?? "SignalDesk <noreply@signaldesk.dev>";
+
+  const ruleName = payload.ruleName as string;
+  const eventType = payload.eventType as string;
+  const count = payload.count as number;
+  const threshold = payload.threshold as number;
+  const windowSeconds = payload.windowSeconds as number;
+  const metadata = payload.eventMetadata as Record<string, unknown>;
+
+  if (!apiKey) {
+    console.log(`[Email Alert] ${to}: ${ruleName} triggered (${eventType} ${count}/${threshold})`);
+    return;
+  }
+
+  const resend = new Resend(apiKey);
+
+  const { error } = await resend.emails.send({
+    from,
+    to,
+    subject: `[SignalDesk] Alert: ${ruleName}`,
+    html: `
+      <div style="font-family:sans-serif;max-width:560px;margin:0 auto;padding:24px">
+        <h2 style="margin:0 0 16px;color:#ef4444">Alert: ${ruleName}</h2>
+        <table style="width:100%;border-collapse:collapse;margin-bottom:16px">
+          <tr><td style="padding:8px;border-bottom:1px solid #eee;color:#666">Event Type</td><td style="padding:8px;border-bottom:1px solid #eee"><code>${eventType}</code></td></tr>
+          <tr><td style="padding:8px;border-bottom:1px solid #eee;color:#666">Count</td><td style="padding:8px;border-bottom:1px solid #eee">${count} / ${threshold}</td></tr>
+          <tr><td style="padding:8px;border-bottom:1px solid #eee;color:#666">Window</td><td style="padding:8px;border-bottom:1px solid #eee">${windowSeconds}s</td></tr>
+        </table>
+        <details style="margin-bottom:16px">
+          <summary style="cursor:pointer;color:#666;font-size:14px">Event Metadata</summary>
+          <pre style="background:#f5f5f5;padding:12px;border-radius:4px;font-size:12px;overflow-x:auto">${JSON.stringify(metadata, null, 2)}</pre>
+        </details>
+        <p style="color:#999;font-size:12px">Sent by SignalDesk</p>
+      </div>
+    `,
+  });
+
+  if (error) {
+    throw new Error(`Email alert failed: ${error.message}`);
+  }
+}
+
 const publisher = new Redis(process.env.REDIS_URL ?? "redis://localhost:6379");
 
 async function broadcastToWebSocket(orgId: string, notificationId: string, payload: Record<string, unknown>): Promise<void> {
@@ -84,6 +185,18 @@ async function processNotification(job: Job<NotificationJobData>): Promise<void>
         throw new Error("Discord webhook URL not configured");
       }
       await sendDiscord(config.webhookUrl, payload);
+    } else if (channel === "slack") {
+      const config = payload.actionConfig as SlackConfig | undefined;
+      if (!config?.webhookUrl) {
+        throw new Error("Slack webhook URL not configured");
+      }
+      await sendSlack(config.webhookUrl, payload);
+    } else if (channel === "email") {
+      const config = payload.actionConfig as EmailConfig | undefined;
+      if (!config?.to) {
+        throw new Error("Email address not configured");
+      }
+      await sendAlertEmail(config.to, payload);
     } else if (channel === "in_app") {
       await broadcastToWebSocket(job.data.orgId, notificationId, payload);
     }

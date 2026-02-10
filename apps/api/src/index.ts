@@ -10,10 +10,15 @@ import { ruleRoutes } from "./routes/rules.ts";
 import { notificationRoutes } from "./routes/notifications.ts";
 import { apiKeyRoutes } from "./routes/api-keys.ts";
 import { usageRoutes } from "./routes/usage.ts";
+import { billingRoutes } from "./routes/billing.ts";
 import { addClient, getClientCount } from "./ws/handler.ts";
 
 const PORT = Number(process.env.API_PORT) || 3001;
-const JWT_SECRET = process.env.JWT_SECRET || "dev-secret-change-in-production";
+if (!process.env.JWT_SECRET) {
+  console.error("JWT_SECRET env var is required");
+  process.exit(1);
+}
+const JWT_SECRET: string = process.env.JWT_SECRET;
 
 const fastify = Fastify({
   logger: {
@@ -24,6 +29,21 @@ const fastify = Fastify({
     },
   },
 });
+
+// Raw body for Stripe webhook signature verification
+fastify.addContentTypeParser(
+  "application/json",
+  { parseAs: "string" },
+  (req, body, done) => {
+    try {
+      const json = JSON.parse(body as string);
+      (req as unknown as Record<string, string>).rawBody = body as string;
+      done(null, json);
+    } catch (err) {
+      done(err as Error, undefined);
+    }
+  }
+);
 
 async function start() {
   // Plugins
@@ -81,6 +101,7 @@ async function start() {
   await fastify.register(notificationRoutes);
   await fastify.register(apiKeyRoutes);
   await fastify.register(usageRoutes);
+  await fastify.register(billingRoutes);
 
   // Start server
   await fastify.listen({ port: PORT, host: "0.0.0.0" });

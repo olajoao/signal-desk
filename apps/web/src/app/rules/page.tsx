@@ -129,6 +129,8 @@ function CreateRuleForm({
     cooldownSeconds: 60,
     webhookUrl: "",
     discordWebhookUrl: "",
+    slackWebhookUrl: "",
+    emailTo: "",
     inApp: true,
   });
 
@@ -143,6 +145,12 @@ function CreateRuleForm({
     }
     if (form.webhookUrl) {
       actions.push({ channel: "webhook", config: { url: form.webhookUrl } });
+    }
+    if (form.slackWebhookUrl) {
+      actions.push({ channel: "slack", config: { webhookUrl: form.slackWebhookUrl } });
+    }
+    if (form.emailTo) {
+      actions.push({ channel: "email", config: { to: form.emailTo } });
     }
     onSubmit({
       name: form.name,
@@ -244,6 +252,28 @@ function CreateRuleForm({
           onChange={(e) => setForm({ ...form, discordWebhookUrl: e.target.value })}
           className="w-full bg-[var(--background)] border border-[var(--border)] rounded px-3 py-2"
           placeholder="https://discord.com/api/webhooks/..."
+        />
+      </div>
+
+      <div className="mb-4">
+        <label className="block text-sm text-gray-400 mb-1">Slack Webhook URL</label>
+        <input
+          type="url"
+          value={form.slackWebhookUrl}
+          onChange={(e) => setForm({ ...form, slackWebhookUrl: e.target.value })}
+          className="w-full bg-[var(--background)] border border-[var(--border)] rounded px-3 py-2"
+          placeholder="https://hooks.slack.com/services/..."
+        />
+      </div>
+
+      <div className="mb-4">
+        <label className="block text-sm text-gray-400 mb-1">Email Alert Address</label>
+        <input
+          type="email"
+          value={form.emailTo}
+          onChange={(e) => setForm({ ...form, emailTo: e.target.value })}
+          className="w-full bg-[var(--background)] border border-[var(--border)] rounded px-3 py-2"
+          placeholder="alerts@example.com"
         />
       </div>
 

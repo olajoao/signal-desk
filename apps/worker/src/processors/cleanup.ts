@@ -1,4 +1,5 @@
 import { prisma } from "@signaldesk/db";
+import { reportOverageUsage } from "./stripe-usage.ts";
 
 // Run cleanup for all organizations based on their plan's retention policy
 export async function runRetentionCleanup(): Promise<{ deleted: number; orgs: number }> {
@@ -139,6 +140,13 @@ export async function reconcileUsage(): Promise<void> {
         overageEvents,
       },
     });
+
+    // Report overage to Stripe if applicable
+    if (overageEvents > 0) {
+      reportOverageUsage(org.id, overageEvents).catch((err) =>
+        console.error(`[Usage] Stripe overage report failed for ${org.id}:`, err.message)
+      );
+    }
   }
 
   console.log(`[Usage] Reconciled usage for ${orgs.length} orgs`);

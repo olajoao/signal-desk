@@ -235,6 +235,19 @@ export async function getPlans() {
   return fetchApi<{ plans: PlanData[] }>("/plans", {});
 }
 
+// Billing
+export async function createCheckoutSession(token: string, planId: string) {
+  return fetchApi<{ url: string }>("/billing/checkout", {
+    token,
+    method: "POST",
+    body: JSON.stringify({ planId }),
+  });
+}
+
+export async function getBillingPortal(token: string) {
+  return fetchApi<{ url: string }>("/billing/portal", { token });
+}
+
 // Members
 export interface MemberItem {
   id: string;

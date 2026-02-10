@@ -9,10 +9,12 @@
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
-    "@signaldesk/shared": "workspace:*",
     "@signaldesk/db": "workspace:*",
     "@signaldesk/queue": "workspace:*",
+    "@signaldesk/shared": "workspace:*",
     "bullmq": "^5",
-    "ioredis": "^5"
+    "ioredis": "^5",
+    "resend": "^6.9.1",
+    "stripe": "^20.3.1"
   }
 }

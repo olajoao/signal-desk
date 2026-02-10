@@ -21,7 +21,8 @@
     "fastify-plugin": "^5",
     "ioredis": "^5.9.2",
     "pino-pretty": "^13",
-    "resend": "^6.9.1"
+    "resend": "^6.9.1",
+    "stripe": "^20.3.1"
   },
   "devDependencies": {
     "@types/jsonwebtoken": "^9.0.10",

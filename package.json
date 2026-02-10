@@ -10,11 +10,13 @@
     "typecheck": "turbo typecheck",
     "db:generate": "turbo db:generate",
     "db:push": "turbo db:push",
-    "db:migrate": "turbo db:migrate"
+    "db:migrate": "turbo db:migrate",
+    "test": "vitest run"
   },
   "devDependencies": {
     "@types/bun": "latest",
     "turbo": "^2",
-    "typescript": "^5"
+    "typescript": "^5",
+    "vitest": "^4.0.18"
   }
 }

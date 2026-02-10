@@ -36,12 +36,12 @@ const icons: Record<string, React.ReactNode> = {
   ),
 };
 
-export function Sidebar() {
+function SidebarContent({ onNavigate }: { onNavigate?: () => void }) {
   const pathname = usePathname();
   const { user, org, logout } = useAuth();
 
   return (
-    <aside className="w-56 border-r border-[var(--border)] bg-[var(--card)] flex flex-col">
+    <>
       <div className="p-4 border-b border-[var(--border)]">
         <h1 className="text-lg font-semibold">SignalDesk</h1>
         {org && <p className="text-xs text-gray-500 mt-1">{org.name}</p>}
@@ -53,6 +53,7 @@ export function Sidebar() {
             <Link
               key={item.href}
               href={item.href}
+              onClick={onNavigate}
               className={`flex items-center gap-3 px-3 py-2 rounded-lg mb-1 transition-colors ${
                 isActive
                   ? "bg-[var(--primary)] text-white"
@@ -76,6 +77,27 @@ export function Sidebar() {
           </button>
         </div>
       )}
+    </>
+  );
+}
+
+export function Sidebar() {
+  return (
+    <aside className="hidden md:flex w-56 border-r border-[var(--border)] bg-[var(--card)] flex-col">
+      <SidebarContent />
     </aside>
+  );
+}
+
+export function MobileNav({ open, onClose }: { open: boolean; onClose: () => void }) {
+  if (!open) return null;
+
+  return (
+    <>
+      <div className="fixed inset-0 bg-black/50 z-40 md:hidden" onClick={onClose} />
+      <aside className="fixed inset-y-0 left-0 w-56 bg-[var(--card)] border-r border-[var(--border)] z-50 flex flex-col md:hidden">
+        <SidebarContent onNavigate={onClose} />
+      </aside>
+    </>
   );
 }

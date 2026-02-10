@@ -13,7 +13,7 @@ export interface NotificationJobData {
   notificationId: string;
   ruleId: string;
   eventId: string;
-  channel: "webhook" | "discord" | "in_app";
+  channel: "webhook" | "discord" | "in_app" | "slack" | "email";
   payload: Record<string, unknown>;
   orgId: string;
 }

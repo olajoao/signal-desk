@@ -1,15 +1,26 @@
 "use client";
 
 import { useQuery } from "@tanstack/react-query";
+import { useState } from "react";
 import { getNotifications } from "@/lib/api";
 import { useAuth } from "@/components/auth-provider";
 
+const PAGE_SIZE = 25;
+
 export default function NotificationsPage() {
   const { token, isLoading: authLoading } = useAuth();
+  const [page, setPage] = useState(0);
+  const [statusFilter, setStatusFilter] = useState("");
 
   const { data, isLoading } = useQuery({
-    queryKey: ["notifications", token],
-    queryFn: () => (token ? getNotifications(token, { limit: 100 }) : Promise.resolve({ notifications: [] })),
+    queryKey: ["notifications", token, page, statusFilter],
+    queryFn: () =>
+      token
+        ? getNotifications(token, {
+            limit: PAGE_SIZE,
+            status: statusFilter || undefined,
+          })
+        : Promise.resolve({ notifications: [] }),
     enabled: !!token,
     refetchInterval: 10000,
   });
@@ -22,18 +33,36 @@ export default function NotificationsPage() {
     failed: "bg-[var(--error)]",
   };
 
+  const notifications = data?.notifications ?? [];
+  const hasMore = notifications.length === PAGE_SIZE;
+
   return (
     <div>
-      <h1 className="text-2xl font-semibold mb-6">Notifications</h1>
+      <div className="flex items-center justify-between mb-6">
+        <h1 className="text-2xl font-semibold">Notifications</h1>
+        <select
+          value={statusFilter}
+          onChange={(e) => {
+            setStatusFilter(e.target.value);
+            setPage(0);
+          }}
+          className="text-sm bg-[var(--background)] border border-[var(--border)] rounded px-2 py-1 text-gray-300"
+        >
+          <option value="">All statuses</option>
+          <option value="sent">Sent</option>
+          <option value="pending">Pending</option>
+          <option value="failed">Failed</option>
+        </select>
+      </div>
 
       <div className="bg-[var(--card)] border border-[var(--border)] rounded-lg">
         {isLoading ? (
           <div className="p-4 text-gray-400">Loading notifications...</div>
-        ) : data?.notifications.length === 0 ? (
+        ) : notifications.length === 0 ? (
           <div className="p-4 text-gray-400">No notifications yet.</div>
         ) : (
           <div className="divide-y divide-[var(--border)]">
-            {data?.notifications.map((notification) => (
+            {notifications.map((notification) => (
               <div key={notification.id} className="p-4">
                 <div className="flex items-center justify-between mb-2">
                   <div className="flex items-center gap-3">
@@ -66,6 +95,27 @@ export default function NotificationsPage() {
           </div>
         )}
       </div>
+
+      {/* Pagination */}
+      {(page > 0 || hasMore) && (
+        <div className="flex items-center justify-between mt-4">
+          <button
+            onClick={() => setPage((p) => Math.max(0, p - 1))}
+            disabled={page === 0}
+            className="px-3 py-1 text-sm border border-[var(--border)] rounded disabled:opacity-30 hover:bg-white/5"
+          >
+            Previous
+          </button>
+          <span className="text-sm text-gray-400">Page {page + 1}</span>
+          <button
+            onClick={() => setPage((p) => p + 1)}
+            disabled={!hasMore}
+            className="px-3 py-1 text-sm border border-[var(--border)] rounded disabled:opacity-30 hover:bg-white/5"
+          >
+            Next
+          </button>
+        </div>
+      )}
     </div>
   );
 }
