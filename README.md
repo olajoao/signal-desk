@@ -1,8 +1,8 @@
 # SignalDesk
 
-Real-time activity, alerts & insights platform for teams.
+Real-time activity, alerts & insights platform for modern engineering teams.
 
-Think: GitHub notifications + Datadog events + Slack alerts — simplified and opinionated.
+Monitor events, define smart rules, and get instant notifications — all in one place. Think: GitHub notifications + Datadog events + Slack alerts — simplified and opinionated.
 
 ## Architecture
 
