@@ -47,7 +47,7 @@ WORKDIR /app
 COPY --from=deps /app .
 COPY packages/ packages/
 COPY apps/api/ apps/api/
-RUN cd packages/db && bunx prisma generate
+RUN cd packages/db && DATABASE_URL="postgresql://x:x@localhost:5432/x" bunx prisma generate
 EXPOSE 3001
 CMD ["sh", "-c", "cd packages/db && bunx prisma migrate deploy && cd /app && bun apps/api/src/index.ts"]
 
@@ -57,7 +57,7 @@ WORKDIR /app
 COPY --from=deps /app .
 COPY packages/ packages/
 COPY apps/worker/ apps/worker/
-RUN cd packages/db && bunx prisma generate
+RUN cd packages/db && DATABASE_URL="postgresql://x:x@localhost:5432/x" bunx prisma generate
 CMD ["bun", "apps/worker/src/index.ts"]
 
 # Select service via build arg
