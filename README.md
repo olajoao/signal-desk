@@ -142,7 +142,7 @@ signaldesk/
 | WS connection always fails | `fp()` auth plugin applies `onRequest` globally; `/ws` not in `PUBLIC_ROUTES` so upgrade rejected with 401 | Added `/ws` to `PUBLIC_ROUTES` |
 | "WebSocket closed before connection established" warning | React StrictMode double-invokes effects; cleanup called `.close()` on CONNECTING socket | Defer close via `onopen` callback, null out handlers on cleanup |
 
-## Future Improvements
+## Roadmap
 
 - [x] JWT authentication (access + refresh tokens, org-scoped)
 - [ ] Slack/Email notification channels
