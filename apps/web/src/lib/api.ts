@@ -1,4 +1,5 @@
 import { refreshAccessToken } from "./auth";
+import { getAccessToken, setTokens, clearTokens } from "./token-store";
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:3001";
 
@@ -13,8 +14,11 @@ async function tryRefresh(): Promise<{ accessToken: string; refreshToken: string
   }
 
   try {
-    return await refreshPromise;
+    const result = await refreshPromise;
+    setTokens(result.accessToken, result.refreshToken);
+    return result;
   } catch {
+    clearTokens();
     if (typeof window !== "undefined") {
       window.location.href = "/login";
     }
@@ -23,25 +27,29 @@ async function tryRefresh(): Promise<{ accessToken: string; refreshToken: string
 }
 
 async function fetchApi<T>(endpoint: string, options: RequestInit = {}): Promise<T> {
-  const headers: HeadersInit = {
+  const headers: Record<string, string> = {
     "Content-Type": "application/json",
-    ...options.headers,
+    ...(options.headers as Record<string, string>),
   };
+
+  const token = getAccessToken();
+  if (token) {
+    headers["Authorization"] = `Bearer ${token}`;
+  }
 
   let response = await fetch(`${API_URL}${endpoint}`, {
     ...options,
     headers,
-    credentials: "include",
   });
 
   // Auto-refresh on 401
   if (response.status === 401) {
     const refreshed = await tryRefresh();
     if (refreshed) {
+      headers["Authorization"] = `Bearer ${refreshed.accessToken}`;
       response = await fetch(`${API_URL}${endpoint}`, {
         ...options,
         headers,
-        credentials: "include",
       });
     }
   }
