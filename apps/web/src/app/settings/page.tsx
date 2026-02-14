@@ -16,7 +16,7 @@ export default function SettingsPage() {
   const [newKeyExpiry, setNewKeyExpiry] = useState("never");
   const [newKeyScopes, setNewKeyScopes] = useState<string[]>([]);
   const [showNewKey, setShowNewKey] = useState<string | null>(null);
-  const [showPlans, setShowPlans] = useState(false);
+
   const [inviteEmail, setInviteEmail] = useState("");
   const [inviteRole, setInviteRole] = useState("member");
 
@@ -46,7 +46,7 @@ export default function SettingsPage() {
   const { data: plansData } = useQuery({
     queryKey: ["plans"],
     queryFn: () => getPlans(),
-    enabled: showPlans,
+    enabled: !!user,
   });
 
   const { data: membersData } = useQuery({
@@ -108,7 +108,7 @@ export default function SettingsPage() {
   const plan = usageData?.plan;
 
   return (
-    <div className="max-w-2xl">
+    <div>
       <h1 className="text-2xl font-semibold mb-6">Settings</h1>
 
       {/* Usage & Plan */}
@@ -129,12 +129,6 @@ export default function SettingsPage() {
                   {portalMutation.isPending ? "Loading..." : "Manage Billing"}
                 </button>
               )}
-              <button
-                onClick={() => setShowPlans(!showPlans)}
-                className="text-sm text-gray-400 hover:text-white"
-              >
-                {showPlans ? "Hide plans" : "Upgrade"}
-              </button>
             </div>
           </div>
 
@@ -206,57 +200,120 @@ export default function SettingsPage() {
         </div>
       )}
 
-      {/* Plans comparison */}
-      {showPlans && plansData && (
-        <div className="bg-[var(--card)] border border-[var(--border)] rounded-lg p-6 mb-6">
-          <h2 className="font-medium mb-4">Available Plans</h2>
-          <div className="grid gap-4">
-            {plansData.plans.map((p) => (
-              <div
-                key={p.id}
-                className={`p-4 border rounded-lg ${
-                  p.id === plan?.id
-                    ? "border-blue-500 bg-blue-500/5"
-                    : "border-[var(--border)]"
-                }`}
-              >
-                <div className="flex items-center justify-between mb-2">
-                  <div>
-                    <span className="font-medium">{p.displayName}</span>
-                    {p.id === plan?.id && (
-                      <span className="ml-2 text-xs text-blue-400">(Current)</span>
-                    )}
-                  </div>
-                  <span className="text-lg font-bold">
-                    ${(p.priceMonthly / 100).toFixed(0)}
-                    <span className="text-sm font-normal text-gray-400">/mo</span>
-                  </span>
-                </div>
-                <div className="text-sm text-gray-400 space-y-1">
-                  <div>{p.eventsPerMonth.toLocaleString()} events/month</div>
-                  <div>{p.rulesLimit} rules</div>
-                  <div>{p.retentionDays} days retention</div>
-                  <div>{p.rateLimit} req/min</div>
-                </div>
-                {p.id !== plan?.id && p.id !== "free" && (
-                  <button
-                    onClick={() => checkoutMutation.mutate(p.id)}
-                    disabled={checkoutMutation.isPending}
-                    className="mt-3 w-full bg-[var(--primary)] text-white px-4 py-2 rounded text-sm hover:bg-[var(--primary)]/80 disabled:opacity-50"
+      {/* Plans */}
+      {plansData && (() => {
+        const tierOrder = ["free", "pro", "max"] as const;
+        const currentTierIdx = tierOrder.indexOf((plan?.id ?? "free") as typeof tierOrder[number]);
+        const overageInfo: Record<string, { label: string; className: string }> = {
+          free: { label: "Hard limit — events rejected", className: "text-red-400" },
+          pro: { label: "$1 per 1,000 overage events", className: "text-gray-400" },
+          max: { label: "$0.50 per 1,000 overage events", className: "text-gray-400" },
+        };
+
+        return (
+          <div className="mb-6">
+            <h2 className="font-medium mb-4">Plans</h2>
+            <div className="flex flex-col md:flex-row gap-6">
+              {plansData.plans.filter((p) => tierOrder.includes(p.id as typeof tierOrder[number])).map((p) => {
+                const isCurrent = p.id === plan?.id;
+                const isPro = p.id === "pro";
+                const isMax = p.id === "max";
+                const planTierIdx = tierOrder.indexOf(p.id as typeof tierOrder[number]);
+                const isUpgrade = !isCurrent && p.id !== "free" && (planTierIdx === -1 || planTierIdx > currentTierIdx);
+                const features = [
+                  `${p.eventsPerMonth.toLocaleString()} events/month`,
+                  `${p.rulesLimit} rules`,
+                  `${p.retentionDays}-day retention`,
+                  `${p.rateLimit} req/min`,
+                ];
+                const overage = overageInfo[p.id];
+
+                return (
+                  <div
+                    key={p.id}
+                    className={`relative flex flex-col flex-1 min-w-0 rounded-xl p-6 transition-all ${
+                      isPro
+                        ? "bg-gradient-to-b from-blue-500/10 to-purple-500/10 border-2 border-transparent scale-[1.02] shadow-lg"
+                        : isMax
+                        ? "bg-[var(--card)] border-2 border-purple-500/40"
+                        : "bg-[var(--card)] border border-[var(--border)]"
+                    }`}
+                    style={isPro ? {
+                      borderImage: "linear-gradient(to bottom, #3b82f6, #a855f7) 1",
+                      borderImageSlice: 1,
+                    } : undefined}
                   >
-                    {checkoutMutation.isPending ? "Redirecting..." : `Upgrade to ${p.displayName}`}
-                  </button>
-                )}
-              </div>
-            ))}
+                    {/* Badges */}
+                    {isPro && (
+                      <span className="absolute -top-3 left-1/2 -translate-x-1/2 text-xs font-semibold px-3 py-1 rounded-full bg-gradient-to-r from-blue-500 to-purple-500 text-white">
+                        Most Popular
+                      </span>
+                    )}
+                    {isCurrent && (
+                      <span className="absolute -top-3 right-4 text-xs font-medium px-3 py-1 rounded-full bg-green-500/20 text-green-400 border border-green-500/30">
+                        Current Plan
+                      </span>
+                    )}
+
+                    {/* Plan name */}
+                    <h3 className="text-lg font-semibold mt-1">{p.displayName}</h3>
+
+                    {/* Price */}
+                    <div className="mt-3 mb-5">
+                      <span className="text-3xl font-bold">
+                        ${(p.priceMonthly / 100).toFixed(0)}
+                      </span>
+                      <span className="text-sm text-gray-400 ml-1">/mo</span>
+                    </div>
+
+                    {/* Features */}
+                    <ul className="space-y-2.5 mb-5 flex-1">
+                      {features.map((f) => (
+                        <li key={f} className="flex items-start gap-2 text-sm text-gray-300">
+                          <svg className="w-4 h-4 mt-0.5 shrink-0 text-green-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+                            <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+                          </svg>
+                          {f}
+                        </li>
+                      ))}
+                      {overage && (
+                        <li className={`flex items-start gap-2 text-sm ${overage.className}`}>
+                          <svg className="w-4 h-4 mt-0.5 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+                            <path strokeLinecap="round" strokeLinejoin="round" d="M13 16h-1v-4h-1m1-4h.01M12 2a10 10 0 100 20 10 10 0 000-20z" />
+                          </svg>
+                          {overage.label}
+                        </li>
+                      )}
+                    </ul>
+
+                    {/* CTA */}
+                    {isCurrent ? (
+                      <div className="text-center text-sm text-gray-500 py-2.5">Current Plan</div>
+                    ) : isUpgrade ? (
+                      <button
+                        onClick={() => checkoutMutation.mutate(p.id)}
+                        disabled={checkoutMutation.isPending}
+                        className={`w-full py-2.5 rounded-lg font-semibold text-white transition-opacity disabled:opacity-50 ${
+                          isPro
+                            ? "bg-gradient-to-r from-blue-500 to-purple-500 text-base py-3"
+                            : "bg-purple-600 hover:bg-purple-500"
+                        }`}
+                      >
+                        {checkoutMutation.isPending ? "Redirecting..." : `Upgrade to ${p.displayName}`}
+                      </button>
+                    ) : null}
+                  </div>
+                );
+              })}
+            </div>
+            {checkoutMutation.isError && (
+              <p className="text-xs text-red-400 mt-4">
+                {checkoutMutation.error instanceof Error ? checkoutMutation.error.message : "Checkout failed"}
+              </p>
+            )}
           </div>
-          {checkoutMutation.isError && (
-            <p className="text-xs text-red-400 mt-4">
-              {checkoutMutation.error instanceof Error ? checkoutMutation.error.message : "Checkout failed"}
-            </p>
-          )}
-        </div>
-      )}
+        );
+      })()}
 
       {/* Account Info */}
       <div className="bg-[var(--card)] border border-[var(--border)] rounded-lg p-6 mb-6">

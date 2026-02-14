@@ -8,52 +8,48 @@ const plans = [
     name: "free",
     displayName: "Free",
     priceMonthly: 0,
-    eventsPerMonth: 1000,
+    eventsPerMonth: 100,
     rulesLimit: 3,
     retentionDays: 7,
-    rateLimit: 60, // 60 req/min
-    overageRate: 0, // no overage allowed
+    rateLimit: 30,
+    overageRate: 0,
     stripePriceId: null,
   },
   {
     id: "pro",
     name: "pro",
     displayName: "Pro",
-    priceMonthly: 2900, // $29
-    eventsPerMonth: 500000,
+    priceMonthly: 1400,
+    eventsPerMonth: 25_000,
     rulesLimit: 25,
     retentionDays: 30,
-    rateLimit: 300, // 300 req/min
-    overageRate: 200, // $2 per 1000 events
+    rateLimit: 120,
+    overageRate: 100,
     stripePriceId: process.env.STRIPE_PRO_PRICE_ID ?? null,
   },
   {
-    id: "enterprise",
-    name: "enterprise",
-    displayName: "Enterprise",
-    priceMonthly: 19900, // $199
-    eventsPerMonth: 5000000,
-    rulesLimit: 1000,
+    id: "max",
+    name: "max",
+    displayName: "Max",
+    priceMonthly: 7000,
+    eventsPerMonth: 300_000,
+    rulesLimit: 999,
     retentionDays: 90,
-    rateLimit: 1000, // 1000 req/min
-    overageRate: 100, // $1 per 1000 events
-    stripePriceId: process.env.STRIPE_ENTERPRISE_PRICE_ID ?? null,
+    rateLimit: 500,
+    overageRate: 50,
+    stripePriceId: process.env.STRIPE_MAX_PRICE_ID ?? null,
   },
 ];
 
 async function main() {
-  console.log("Seeding plans...");
-
   for (const plan of plans) {
     await prisma.plan.upsert({
       where: { id: plan.id },
       update: plan,
       create: plan,
     });
-    console.log(`  - ${plan.displayName}: ${plan.eventsPerMonth.toLocaleString()} events/mo`);
   }
-
-  console.log("Done!");
+  console.log("Seeded plans: free, pro, max");
 }
 
 main()
