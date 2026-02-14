@@ -1,21 +1,23 @@
 "use client";
 
-import { createContext, useContext, useEffect, useState, type ReactNode } from "react";
+import { createContext, useContext, useEffect, useRef, useState, type ReactNode } from "react";
 import { useRouter, usePathname } from "next/navigation";
 import type { User, Org } from "@/lib/auth";
 import { getMe, refreshAccessToken, logoutApi } from "@/lib/auth";
 
+// Refresh 2 minutes before the 15-minute JWT expires
+const REFRESH_INTERVAL_MS = 13 * 60 * 1000;
+
 interface AuthState {
-  token: string | null;
   user: User | null;
   org: Org | null;
   isLoading: boolean;
 }
 
 interface AuthContextValue extends AuthState {
-  setAuth: (accessToken: string, refreshToken: string, user: User, org: Org) => void;
+  setAuth: (user: User, org: Org) => void;
   logout: () => void;
-  refreshAuth: () => Promise<string | null>;
+  refreshAuth: () => Promise<boolean>;
 }
 
 const AuthContext = createContext<AuthContextValue | null>(null);
@@ -24,7 +26,6 @@ const PUBLIC_PATHS = ["/", "/login", "/signup", "/forgot-password", "/reset-pass
 
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [state, setState] = useState<AuthState>({
-    token: null,
     user: null,
     org: null,
     isLoading: true,
@@ -33,71 +34,77 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const pathname = usePathname();
 
   useEffect(() => {
-    const accessToken = localStorage.getItem("token");
-    const rt = localStorage.getItem("refreshToken");
-
-    if (!accessToken) {
-      setState((s) => ({ ...s, isLoading: false }));
-      if (!PUBLIC_PATHS.some((p) => pathname.startsWith(p))) {
-        router.push("/login");
-      }
-      return;
-    }
-
-    getMe(accessToken)
+    // Cookies are sent automatically — just check if session is valid
+    getMe()
       .then(({ user, org }) => {
-        setState({ token: accessToken, user, org, isLoading: false });
-      })
-      .catch(async () => {
-        // Try refresh
-        if (rt) {
-          try {
-            const refreshed = await refreshAccessToken(rt);
-            localStorage.setItem("token", refreshed.accessToken);
-            localStorage.setItem("refreshToken", refreshed.refreshToken);
-            const { user, org } = await getMe(refreshed.accessToken);
-            setState({ token: refreshed.accessToken, user, org, isLoading: false });
-            return;
-          } catch {
-            // Refresh also failed
+        if (user && org) {
+          setState({ user, org, isLoading: false });
+        } else {
+          setState({ user: null, org: null, isLoading: false });
+          if (!PUBLIC_PATHS.some((p) => pathname.startsWith(p))) {
+            router.push("/login");
           }
         }
+      })
+      .catch(async () => {
+        // Try refresh via cookie
+        try {
+          await refreshAccessToken();
+          const { user, org } = await getMe();
+          if (user && org) {
+            setState({ user, org, isLoading: false });
+            return;
+          }
+        } catch {
+          // Refresh also failed
+        }
 
-        localStorage.removeItem("token");
-        localStorage.removeItem("refreshToken");
-        setState({ token: null, user: null, org: null, isLoading: false });
+        setState({ user: null, org: null, isLoading: false });
         if (!PUBLIC_PATHS.some((p) => pathname.startsWith(p))) {
           router.push("/login");
         }
       });
   }, [pathname, router]);
 
-  const setAuth = (accessToken: string, refreshToken: string, user: User, org: Org) => {
-    localStorage.setItem("token", accessToken);
-    localStorage.setItem("refreshToken", refreshToken);
-    setState({ token: accessToken, user, org, isLoading: false });
+  // Proactive session refresh — keeps JWT alive while tab is open
+  const refreshTimer = useRef<ReturnType<typeof setInterval> | null>(null);
+
+  useEffect(() => {
+    if (!state.user) {
+      if (refreshTimer.current) clearInterval(refreshTimer.current);
+      return;
+    }
+
+    refreshTimer.current = setInterval(async () => {
+      try {
+        await refreshAccessToken();
+      } catch {
+        setState({ user: null, org: null, isLoading: false });
+        router.push("/login");
+      }
+    }, REFRESH_INTERVAL_MS);
+
+    return () => {
+      if (refreshTimer.current) clearInterval(refreshTimer.current);
+    };
+  }, [state.user, router]);
+
+  const setAuth = (user: User, org: Org) => {
+    setState({ user, org, isLoading: false });
   };
 
-  const refreshAuth = async (): Promise<string | null> => {
-    const rt = localStorage.getItem("refreshToken");
-    if (!rt) return null;
+  const refreshAuth = async (): Promise<boolean> => {
     try {
-      const refreshed = await refreshAccessToken(rt);
-      localStorage.setItem("token", refreshed.accessToken);
-      localStorage.setItem("refreshToken", refreshed.refreshToken);
-      setState((s) => ({ ...s, token: refreshed.accessToken }));
-      return refreshed.accessToken;
+      await refreshAccessToken();
+      return true;
     } catch {
-      return null;
+      return false;
     }
   };
 
   const logout = () => {
-    const rt = localStorage.getItem("refreshToken");
-    if (rt) logoutApi(rt);
-    localStorage.removeItem("token");
-    localStorage.removeItem("refreshToken");
-    setState({ token: null, user: null, org: null, isLoading: false });
+    logoutApi();
+    setState({ user: null, org: null, isLoading: false });
     router.push("/login");
   };
 

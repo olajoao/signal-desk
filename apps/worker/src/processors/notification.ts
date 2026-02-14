@@ -3,6 +3,7 @@ import Redis from "ioredis";
 import { prisma } from "@signaldesk/db";
 import { getRedisConnection, type NotificationJobData } from "@signaldesk/queue";
 import { Resend } from "resend";
+import { logger } from "../index.ts";
 
 interface WebhookConfig {
   url: string;
@@ -130,7 +131,7 @@ async function sendAlertEmail(to: string, payload: Record<string, unknown>): Pro
   const metadata = payload.eventMetadata as Record<string, unknown>;
 
   if (!apiKey) {
-    console.log(`[Email Alert] ${to}: ${ruleName} triggered (${eventType} ${count}/${threshold})`);
+    logger.info({ to, ruleName, eventType, count, threshold }, "Email alert skipped (no RESEND_API_KEY)");
     return;
   }
 
@@ -208,11 +209,14 @@ async function processNotification(job: Job<NotificationJobData>): Promise<void>
     });
   } catch (error) {
     const message = error instanceof Error ? error.message : "Unknown error";
+    const isLastAttempt = (job.attemptsMade + 1) >= (job.opts.attempts ?? 3);
 
-    // Mark as failed
+    // Only mark as permanently failed on last attempt
     await prisma.notification.update({
       where: { id: notificationId },
-      data: { status: "failed", error: message },
+      data: isLastAttempt
+        ? { status: "failed", error: message }
+        : { status: "retrying", error: `Attempt ${job.attemptsMade + 1} failed: ${message}` },
     });
 
     throw error;
@@ -223,14 +227,15 @@ export function startNotificationWorker(): Worker<NotificationJobData> {
   const worker = new Worker<NotificationJobData>("notifications", processNotification, {
     connection: getRedisConnection(),
     concurrency: 5,
+    lockDuration: 60000,
   });
 
   worker.on("completed", (job) => {
-    console.log(`Notification ${job.data.notificationId} sent via ${job.data.channel}`);
+    logger.info({ notificationId: job.data.notificationId, channel: job.data.channel }, "Notification sent");
   });
 
   worker.on("failed", (job, err) => {
-    console.error(`Notification ${job?.data.notificationId} failed:`, err.message);
+    logger.error({ notificationId: job?.data.notificationId, channel: job?.data.channel, error: err.message, attempt: job?.attemptsMade }, "Notification failed");
   });
 
   return worker;

@@ -8,24 +8,22 @@ import { useAuth } from "@/components/auth-provider";
 const PAGE_SIZE = 25;
 
 export default function NotificationsPage() {
-  const { token, isLoading: authLoading } = useAuth();
+  const { user, isLoading: authLoading } = useAuth();
   const [page, setPage] = useState(0);
   const [statusFilter, setStatusFilter] = useState("");
 
   const { data, isLoading } = useQuery({
-    queryKey: ["notifications", token, page, statusFilter],
+    queryKey: ["notifications", page, statusFilter],
     queryFn: () =>
-      token
-        ? getNotifications(token, {
-            limit: PAGE_SIZE,
-            status: statusFilter || undefined,
-          })
-        : Promise.resolve({ notifications: [] }),
-    enabled: !!token,
+      getNotifications({
+        limit: PAGE_SIZE,
+        status: statusFilter || undefined,
+      }),
+    enabled: !!user,
     refetchInterval: 10000,
   });
 
-  if (authLoading || !token) return <div className="text-gray-400">Loading...</div>;
+  if (authLoading || !user) return <div className="text-gray-400">Loading...</div>;
 
   const statusColors: Record<string, string> = {
     sent: "bg-[var(--success)]",

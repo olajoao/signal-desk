@@ -83,11 +83,14 @@ export async function eventRoutes(fastify: FastifyInstance) {
       type?: string;
     };
 
+    const take = Math.min(Math.max(1, Math.floor(Number(limit)) || 50), 100);
+    const skip = Math.max(0, Math.floor(Number(offset)) || 0);
+
     const events = await prisma.event.findMany({
       where: { orgId: request.orgId, ...(type ? { type } : {}) },
       orderBy: { timestamp: "desc" },
-      take: Math.min(Number(limit), 100),
-      skip: Number(offset),
+      take,
+      skip,
     });
 
     return reply.send({

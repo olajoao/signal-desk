@@ -1,6 +1,7 @@
 import Fastify from "fastify";
 import cors from "@fastify/cors";
 import jwt from "@fastify/jwt";
+import cookie from "@fastify/cookie";
 import websocket from "@fastify/websocket";
 import rateLimit from "@fastify/rate-limit";
 import authPlugin from "../plugins/auth.ts";
@@ -20,7 +21,12 @@ export async function buildApp() {
 
   await app.register(cors);
   await app.register(rateLimit, { max: 1000, timeWindow: "1 minute" });
-  await app.register(jwt, { secret: JWT_SECRET, sign: { expiresIn: "15m" } });
+  await app.register(jwt, {
+    secret: JWT_SECRET,
+    sign: { expiresIn: "15m" },
+    cookie: { cookieName: "access_token", signed: false },
+  });
+  await app.register(cookie);
   await app.register(websocket);
 
   // Raw body parser for webhook tests

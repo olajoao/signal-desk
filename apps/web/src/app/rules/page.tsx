@@ -6,18 +6,18 @@ import { getRules, createRule, deleteRule, updateRule, type RuleItem } from "@/l
 import { useAuth } from "@/components/auth-provider";
 
 export default function RulesPage() {
-  const { token, isLoading: authLoading } = useAuth();
+  const { user, isLoading: authLoading } = useAuth();
   const queryClient = useQueryClient();
   const [isCreating, setIsCreating] = useState(false);
 
   const { data, isLoading } = useQuery({
-    queryKey: ["rules", token],
-    queryFn: () => (token ? getRules(token) : Promise.resolve({ rules: [] })),
-    enabled: !!token,
+    queryKey: ["rules"],
+    queryFn: () => getRules(),
+    enabled: !!user,
   });
 
   const createMutation = useMutation({
-    mutationFn: (rule: Omit<RuleItem, "id">) => createRule(token!, rule),
+    mutationFn: (rule: Omit<RuleItem, "id">) => createRule(rule),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["rules"] });
       setIsCreating(false);
@@ -25,17 +25,17 @@ export default function RulesPage() {
   });
 
   const deleteMutation = useMutation({
-    mutationFn: (id: string) => deleteRule(token!, id),
+    mutationFn: (id: string) => deleteRule(id),
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ["rules"] }),
   });
 
   const toggleMutation = useMutation({
     mutationFn: ({ id, enabled }: { id: string; enabled: boolean }) =>
-      updateRule(token!, id, { enabled }),
+      updateRule(id, { enabled }),
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ["rules"] }),
   });
 
-  if (authLoading || !token) return <div className="text-gray-400">Loading...</div>;
+  if (authLoading || !user) return <div className="text-gray-400">Loading...</div>;
 
   return (
     <div>

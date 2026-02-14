@@ -5,5 +5,16 @@ export default defineConfig({
     globals: true,
     testTimeout: 15000,
     hookTimeout: 15000,
+    // Skip integration tests (need DATABASE_URL) in default run
+    exclude: [
+      "**/node_modules/**",
+      ...(process.env.DATABASE_URL
+        ? []
+        : [
+            "apps/api/src/__tests__/auth.test.ts",
+            "apps/api/src/__tests__/events.test.ts",
+            "apps/api/src/__tests__/billing.test.ts",
+          ]),
+    ],
   },
 });

@@ -10,11 +10,14 @@ export async function notificationRoutes(fastify: FastifyInstance) {
       status?: string;
     };
 
+    const take = Math.min(Math.max(1, Math.floor(Number(limit)) || 50), 100);
+    const skip = Math.max(0, Math.floor(Number(offset)) || 0);
+
     const notifications = await prisma.notification.findMany({
       where: { orgId: request.orgId, ...(status ? { status } : {}) },
       orderBy: { createdAt: "desc" },
-      take: Math.min(Number(limit), 100),
-      skip: Number(offset),
+      take,
+      skip,
       include: {
         rule: { select: { name: true } },
         event: { select: { type: true } },

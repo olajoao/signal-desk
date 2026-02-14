@@ -10,7 +10,7 @@ const PUBLIC_PATHS = ["/", "/login", "/signup", "/forgot-password", "/reset-pass
 export function AppShell({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
   const router = useRouter();
-  const { token, isLoading } = useAuth();
+  const { user, isLoading } = useAuth();
   const [mobileNavOpen, setMobileNavOpen] = useState(false);
 
   const isPublicPage = PUBLIC_PATHS.includes(pathname);
@@ -23,10 +23,10 @@ export function AppShell({ children }: { children: React.ReactNode }) {
 
   // Redirect authenticated users from landing to dashboard
   useEffect(() => {
-    if (!isLoading && token && isLandingPage) {
+    if (!isLoading && user && isLandingPage) {
       router.push("/dashboard");
     }
-  }, [isLoading, token, isLandingPage, router]);
+  }, [isLoading, user, isLandingPage, router]);
 
   if (isLoading) {
     return (
@@ -37,7 +37,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
   }
 
   // Landing page for unauthenticated users
-  if (isLandingPage && !token) {
+  if (isLandingPage && !user) {
     return <>{children}</>;
   }
 
@@ -46,8 +46,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
     return <>{children}</>;
   }
 
-  // Protected pages - redirect to login if no token
-  if (!token) {
+  if (!user) {
     return null; // Auth provider handles redirect
   }
 

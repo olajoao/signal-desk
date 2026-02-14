@@ -10,28 +10,36 @@ import {
 import { useAuth } from "@/components/auth-provider";
 
 export default function SettingsPage() {
-  const { token, user, org, isLoading: authLoading } = useAuth();
+  const { user, org, isLoading: authLoading } = useAuth();
   const queryClient = useQueryClient();
   const [newKeyName, setNewKeyName] = useState("");
   const [newKeyExpiry, setNewKeyExpiry] = useState("never");
+  const [newKeyScopes, setNewKeyScopes] = useState<string[]>([]);
   const [showNewKey, setShowNewKey] = useState<string | null>(null);
   const [showPlans, setShowPlans] = useState(false);
   const [inviteEmail, setInviteEmail] = useState("");
   const [inviteRole, setInviteRole] = useState("member");
 
+  const ALL_SCOPES = [
+    "events:read", "events:write",
+    "rules:read", "rules:write",
+    "notifications:read",
+    "api-keys:read", "api-keys:write",
+  ] as const;
+
   const isOwner = org?.role === "owner";
   const isAdmin = org?.role === "admin" || isOwner;
 
   const { data, isLoading } = useQuery({
-    queryKey: ["api-keys", token],
-    queryFn: () => (token ? getApiKeys(token) : Promise.resolve({ apiKeys: [] })),
-    enabled: !!token,
+    queryKey: ["api-keys"],
+    queryFn: () => getApiKeys(),
+    enabled: !!user,
   });
 
   const { data: usageData } = useQuery({
-    queryKey: ["usage", token],
-    queryFn: () => (token ? getUsage(token) : null),
-    enabled: !!token,
+    queryKey: ["usage"],
+    queryFn: () => getUsage(),
+    enabled: !!user,
     refetchInterval: 30000,
   });
 
@@ -42,30 +50,31 @@ export default function SettingsPage() {
   });
 
   const { data: membersData } = useQuery({
-    queryKey: ["members", token],
-    queryFn: () => (token ? getMembers(token) : Promise.resolve({ members: [] })),
-    enabled: !!token,
+    queryKey: ["members"],
+    queryFn: () => getMembers(),
+    enabled: !!user,
   });
 
   const createMutation = useMutation({
-    mutationFn: ({ name, expiresIn }: { name: string; expiresIn?: string }) =>
-      createApiKey(token!, name, expiresIn),
+    mutationFn: ({ name, expiresIn, scopes }: { name: string; expiresIn?: string; scopes?: string[] }) =>
+      createApiKey(name, expiresIn, scopes),
     onSuccess: (result) => {
       queryClient.invalidateQueries({ queryKey: ["api-keys"] });
       setShowNewKey(result.key);
       setNewKeyName("");
       setNewKeyExpiry("never");
+      setNewKeyScopes([]);
     },
   });
 
   const deleteMutation = useMutation({
-    mutationFn: (id: string) => deleteApiKey(token!, id),
+    mutationFn: (id: string) => deleteApiKey(id),
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ["api-keys"] }),
   });
 
   const inviteMutation = useMutation({
     mutationFn: ({ email, role }: { email: string; role: string }) =>
-      inviteMember(token!, email, role),
+      inviteMember(email, role),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["members"] });
       setInviteEmail("");
@@ -74,25 +83,25 @@ export default function SettingsPage() {
   });
 
   const removeMemberMutation = useMutation({
-    mutationFn: (id: string) => removeMember(token!, id),
+    mutationFn: (id: string) => removeMember(id),
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ["members"] }),
   });
 
   const checkoutMutation = useMutation({
-    mutationFn: (planId: string) => createCheckoutSession(token!, planId),
+    mutationFn: (planId: string) => createCheckoutSession(planId),
     onSuccess: (data) => {
       window.location.href = data.url;
     },
   });
 
   const portalMutation = useMutation({
-    mutationFn: () => getBillingPortal(token!),
+    mutationFn: () => getBillingPortal(),
     onSuccess: (data) => {
       window.location.href = data.url;
     },
   });
 
-  if (authLoading || !token) return <div className="text-gray-400">Loading...</div>;
+  if (authLoading || !user) return <div className="text-gray-400">Loading...</div>;
 
   const usage = usageData?.usage;
   const limits = usageData?.limits;
@@ -359,35 +368,71 @@ export default function SettingsPage() {
           <form
             onSubmit={(e) => {
               e.preventDefault();
-              createMutation.mutate({ name: newKeyName, expiresIn: newKeyExpiry === "never" ? undefined : newKeyExpiry });
+              createMutation.mutate({
+                name: newKeyName,
+                expiresIn: newKeyExpiry === "never" ? undefined : newKeyExpiry,
+                scopes: newKeyScopes.length > 0 ? newKeyScopes : undefined,
+              });
             }}
-            className="flex gap-2"
           >
-            <input
-              type="text"
-              value={newKeyName}
-              onChange={(e) => setNewKeyName(e.target.value)}
-              className="flex-1 bg-[var(--background)] border border-[var(--border)] rounded px-3 py-2"
-              placeholder="Key name (e.g., production)"
-              required
-            />
-            <select
-              value={newKeyExpiry}
-              onChange={(e) => setNewKeyExpiry(e.target.value)}
-              className="bg-[var(--background)] border border-[var(--border)] rounded px-3 py-2 text-sm"
-            >
-              <option value="never">Never expires</option>
-              <option value="30d">30 days</option>
-              <option value="90d">90 days</option>
-              <option value="1y">1 year</option>
-            </select>
-            <button
-              type="submit"
-              disabled={createMutation.isPending}
-              className="bg-[var(--primary)] text-white px-4 py-2 rounded hover:bg-[var(--primary)]/80 disabled:opacity-50"
-            >
-              {createMutation.isPending ? "Creating..." : "Create"}
-            </button>
+            <div className="flex gap-2 mb-3">
+              <input
+                type="text"
+                value={newKeyName}
+                onChange={(e) => setNewKeyName(e.target.value)}
+                className="flex-1 bg-[var(--background)] border border-[var(--border)] rounded px-3 py-2"
+                placeholder="Key name (e.g., production)"
+                required
+              />
+              <select
+                value={newKeyExpiry}
+                onChange={(e) => setNewKeyExpiry(e.target.value)}
+                className="bg-[var(--background)] border border-[var(--border)] rounded px-3 py-2 text-sm"
+              >
+                <option value="never">Never expires</option>
+                <option value="30d">30 days</option>
+                <option value="90d">90 days</option>
+                <option value="1y">1 year</option>
+              </select>
+              <button
+                type="submit"
+                disabled={createMutation.isPending}
+                className="bg-[var(--primary)] text-white px-4 py-2 rounded hover:bg-[var(--primary)]/80 disabled:opacity-50"
+              >
+                {createMutation.isPending ? "Creating..." : "Create"}
+              </button>
+            </div>
+            <div>
+              <div className="text-xs text-gray-400 mb-2">
+                Scopes <span className="text-gray-500">(empty = full access)</span>
+              </div>
+              <div className="flex flex-wrap gap-2">
+                {ALL_SCOPES.map((scope) => (
+                  <label
+                    key={scope}
+                    className={`text-xs px-2 py-1 rounded border cursor-pointer select-none transition-colors ${
+                      newKeyScopes.includes(scope)
+                        ? "bg-blue-500/20 border-blue-500/50 text-blue-300"
+                        : "border-[var(--border)] text-gray-400 hover:border-gray-500"
+                    }`}
+                  >
+                    <input
+                      type="checkbox"
+                      className="sr-only"
+                      checked={newKeyScopes.includes(scope)}
+                      onChange={(e) =>
+                        setNewKeyScopes(
+                          e.target.checked
+                            ? [...newKeyScopes, scope]
+                            : newKeyScopes.filter((s) => s !== scope)
+                        )
+                      }
+                    />
+                    {scope}
+                  </label>
+                ))}
+              </div>
+            </div>
           </form>
         </div>
       )}
@@ -417,6 +462,17 @@ export default function SettingsPage() {
                     {key.lastUsedAt && ` | Last used ${new Date(key.lastUsedAt).toLocaleDateString()}`}
                     {key.expiresAt && ` | Expires ${new Date(key.expiresAt).toLocaleDateString()}`}
                   </div>
+                  {key.scopes && key.scopes.length > 0 ? (
+                    <div className="flex flex-wrap gap-1 mt-1">
+                      {key.scopes.map((s) => (
+                        <span key={s} className="text-[10px] px-1.5 py-0.5 bg-blue-500/10 text-blue-400 rounded">
+                          {s}
+                        </span>
+                      ))}
+                    </div>
+                  ) : (
+                    <div className="text-[10px] text-gray-500 mt-1">Full access</div>
+                  )}
                 </div>
                 {isAdmin && (
                   <button

@@ -65,37 +65,37 @@ function StatCard({
 }
 
 export default function DashboardPage() {
-  const { token, isLoading: authLoading, refreshAuth } = useAuth();
+  const { user, isLoading: authLoading, refreshAuth } = useAuth();
   const queryClient = useQueryClient();
   const [liveEvents, setLiveEvents] = useState<EventItem[]>([]);
   const [liveNotifications, setLiveNotifications] = useState<LiveNotification[]>([]);
   const [typeFilter, setTypeFilter] = useState("");
 
   const { data: eventsData, isLoading: eventsLoading } = useQuery({
-    queryKey: ["events", token],
-    queryFn: () => (token ? getEvents(token, { limit: 50 }) : Promise.resolve({ events: [] })),
-    enabled: !!token,
+    queryKey: ["events", user?.id],
+    queryFn: () => getEvents({ limit: 50 }),
+    enabled: !!user,
   });
 
   const { data: usageData } = useQuery({
-    queryKey: ["usage", token],
-    queryFn: () => (token ? getUsage(token) : Promise.reject()),
-    enabled: !!token,
+    queryKey: ["usage", user?.id],
+    queryFn: () => getUsage(),
+    enabled: !!user,
     staleTime: 30_000,
     refetchInterval: 30_000,
   });
 
   const { data: rulesData } = useQuery({
-    queryKey: ["rules", token],
-    queryFn: () => (token ? getRules(token) : Promise.reject()),
-    enabled: !!token,
+    queryKey: ["rules", user?.id],
+    queryFn: () => getRules(),
+    enabled: !!user,
     staleTime: 60_000,
   });
 
   const { data: notificationsData } = useQuery({
-    queryKey: ["notifications", token],
-    queryFn: () => (token ? getNotifications(token, { limit: 50 }) : Promise.reject()),
-    enabled: !!token,
+    queryKey: ["notifications", user?.id],
+    queryFn: () => getNotifications({ limit: 50 }),
+    enabled: !!user,
     staleTime: 10_000,
     refetchInterval: 15_000,
   });
@@ -114,15 +114,15 @@ export default function DashboardPage() {
     []
   );
 
-  const { isConnected } = useWebSocket(token, handleMessage, refreshAuth);
+  const { isConnected } = useWebSocket(!!user, handleMessage, refreshAuth);
 
   // Invalidate queries when new live notifications arrive
   useEffect(() => {
     if (liveNotifications.length > 0) {
-      queryClient.invalidateQueries({ queryKey: ["notifications", token] });
-      queryClient.invalidateQueries({ queryKey: ["usage", token] });
+      queryClient.invalidateQueries({ queryKey: ["notifications", user?.id] });
+      queryClient.invalidateQueries({ queryKey: ["usage", user?.id] });
     }
-  }, [liveNotifications.length, queryClient, token]);
+  }, [liveNotifications.length, queryClient, user?.id]);
 
   // Dedup events
   const allEvents = useMemo(() => {
@@ -184,7 +184,7 @@ export default function DashboardPage() {
     return merged;
   }, [liveNotifications, notificationsData]);
 
-  if (authLoading || !token) {
+  if (authLoading || !user) {
     return <div className="text-gray-400">Loading...</div>;
   }
 

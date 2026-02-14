@@ -26,14 +26,14 @@ export default function SignupPage() {
     setLoading(true);
 
     try {
-      const { accessToken, refreshToken, user, org } = await signup({
+      const { user, org } = await signup({
         email,
         password,
         name: name || undefined,
         orgName: inviteToken ? undefined : orgName,
         inviteToken,
       });
-      setAuth(accessToken, refreshToken, user, org);
+      setAuth(user, org);
       router.push("/dashboard");
     } catch (err) {
       setError(err instanceof Error ? err.message : "Signup failed");

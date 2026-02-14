@@ -12,6 +12,7 @@ import {
 } from "@signaldesk/shared";
 import { requireRole } from "../plugins/rbac.ts";
 import { sendPasswordResetEmail, sendInviteEmail } from "../services/email.ts";
+import { setAuthCookies, clearAuthCookies } from "../services/cookies.ts";
 
 function generateSlug(name: string): string {
   return name
@@ -104,6 +105,7 @@ export async function authRoutes(fastify: FastifyInstance) {
 
       const refreshToken = await createRefreshToken(result.user.id, result.org.id);
 
+      setAuthCookies(reply, accessToken, refreshToken);
       return reply.status(201).send({
         accessToken,
         refreshToken,
@@ -133,6 +135,7 @@ export async function authRoutes(fastify: FastifyInstance) {
 
     const refreshToken = await createRefreshToken(result.user.id, result.org.id);
 
+    setAuthCookies(reply, accessToken, refreshToken);
     return reply.status(201).send({
       accessToken,
       refreshToken,
@@ -177,6 +180,7 @@ export async function authRoutes(fastify: FastifyInstance) {
 
     const refreshToken = await createRefreshToken(user.id, membership.orgId);
 
+    setAuthCookies(reply, accessToken, refreshToken);
     return reply.send({
       accessToken,
       refreshToken,
@@ -187,12 +191,14 @@ export async function authRoutes(fastify: FastifyInstance) {
 
   // Refresh token
   fastify.post("/auth/refresh", async (request, reply) => {
-    const parsed = RefreshTokenSchema.safeParse(request.body);
-    if (!parsed.success) {
-      return reply.status(400).send({ error: "Invalid input" });
+    // Support refresh token from body or cookie
+    const bodyToken = RefreshTokenSchema.safeParse(request.body);
+    const rt = bodyToken.success ? bodyToken.data.refreshToken : request.cookies.refresh_token;
+    if (!rt) {
+      return reply.status(400).send({ error: "Refresh token required" });
     }
 
-    const tokenHash = hashToken(parsed.data.refreshToken);
+    const tokenHash = hashToken(rt);
     const existing = await prisma.refreshToken.findUnique({ where: { tokenHash } });
 
     if (!existing || existing.revokedAt || existing.expiresAt < new Date()) {
@@ -222,22 +228,26 @@ export async function authRoutes(fastify: FastifyInstance) {
 
     const newRefreshToken = await createRefreshToken(existing.userId, existing.orgId);
 
+    setAuthCookies(reply, accessToken, newRefreshToken);
     return reply.send({ accessToken, refreshToken: newRefreshToken });
   });
 
   // Logout
   fastify.post("/auth/logout", async (request, reply) => {
-    const parsed = RefreshTokenSchema.safeParse(request.body);
-    if (!parsed.success) {
-      return reply.status(400).send({ error: "Invalid input" });
+    // Support refresh token from body or cookie
+    const bodyToken = (request.body as Record<string, string> | null)?.refreshToken;
+    const cookieToken = request.cookies.refresh_token;
+    const rt = bodyToken ?? cookieToken;
+
+    if (rt) {
+      const tokenHash = hashToken(rt);
+      await prisma.refreshToken.updateMany({
+        where: { tokenHash, revokedAt: null },
+        data: { revokedAt: new Date() },
+      });
     }
 
-    const tokenHash = hashToken(parsed.data.refreshToken);
-    await prisma.refreshToken.updateMany({
-      where: { tokenHash, revokedAt: null },
-      data: { revokedAt: new Date() },
-    });
-
+    clearAuthCookies(reply);
     return reply.send({ message: "Logged out" });
   });
 
@@ -268,6 +278,24 @@ export async function authRoutes(fastify: FastifyInstance) {
         ? { id: membership.org.id, name: membership.org.name, slug: membership.org.slug, role: membership.role }
         : null,
     });
+  });
+
+  // WS ticket — short-lived token for WebSocket auth (avoids JWT in URL)
+  fastify.get("/auth/ws-ticket", async (request, reply) => {
+    try {
+      await request.jwtVerify();
+    } catch {
+      return reply.status(401).send({ error: "Unauthorized" });
+    }
+
+    const { userId, orgId, role } = request.user as { userId: string; orgId: string; role: string };
+
+    const ticket = fastify.jwt.sign(
+      { userId, orgId, role },
+      { expiresIn: "30s" }
+    );
+
+    return reply.send({ ticket });
   });
 
   // Forgot password

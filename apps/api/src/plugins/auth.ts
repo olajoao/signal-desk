@@ -11,6 +11,7 @@ declare module "fastify" {
     authType: "api_key" | "jwt" | "none";
     userId: string;
     role: string;
+    apiKeyScopes: string[];
   }
 }
 
@@ -31,6 +32,7 @@ const PUBLIC_ROUTES = [
   "/auth/forgot-password",
   "/auth/reset-password",
   "/auth/accept-invite",
+  "/auth/ws-ticket",
   "/plans",
   "/billing/webhook",
 ];
@@ -45,6 +47,7 @@ async function authPlugin(fastify: FastifyInstance) {
   fastify.decorateRequest("authType", "none");
   fastify.decorateRequest("userId", "");
   fastify.decorateRequest("role", "");
+  fastify.decorateRequest("apiKeyScopes", { getter() { return [] as string[]; } });
 
   fastify.addHook("onRequest", async (request: FastifyRequest, reply: FastifyReply) => {
     // Skip auth for public routes
@@ -81,12 +84,16 @@ async function authPlugin(fastify: FastifyInstance) {
       request.orgId = apiKey.orgId;
       request.planId = apiKey.org.planId;
       request.authType = "api_key";
-      request.role = "owner"; // API keys have full org access
+      request.role = "owner";
+      request.apiKeyScopes = apiKey.scopes; // empty = full access
       return;
     }
 
-    // JWT auth (dashboard users)
-    if (authHeader?.startsWith("Bearer ey")) {
+    // JWT auth (dashboard users) — header or cookie
+    const hasJwtHeader = authHeader?.startsWith("Bearer ey");
+    const hasJwtCookie = request.cookies?.access_token;
+
+    if (hasJwtHeader || hasJwtCookie) {
       try {
         await request.jwtVerify();
         const { userId, orgId, role } = request.user;

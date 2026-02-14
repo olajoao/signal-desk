@@ -153,32 +153,38 @@ export async function checkRateLimit(
   const limits = await getPlanLimits(planId);
   const key = `ratelimit:${orgId}`;
   const window = 60; // 1 minute window
-  const now = Date.now();
-  const windowStart = now - window * 1000;
 
-  // Remove old entries
-  await redis.zremrangebyscore(key, 0, windowStart);
+  try {
+    const now = Date.now();
+    const windowStart = now - window * 1000;
 
-  // Count current requests
-  const count = await redis.zcard(key);
+    // Remove old entries
+    await redis.zremrangebyscore(key, 0, windowStart);
 
-  if (count >= limits.rateLimit) {
-    // Get oldest entry to calculate reset time
-    const oldest = await redis.zrange(key, 0, 0, "WITHSCORES");
-    const resetIn = oldest.length > 1 ? Math.ceil((Number(oldest[1]) + window * 1000 - now) / 1000) : window;
+    // Count current requests
+    const count = await redis.zcard(key);
 
-    return { allowed: false, remaining: 0, resetIn };
+    if (count >= limits.rateLimit) {
+      // Get oldest entry to calculate reset time
+      const oldest = await redis.zrange(key, 0, 0, "WITHSCORES");
+      const resetIn = oldest.length > 1 ? Math.ceil((Number(oldest[1]) + window * 1000 - now) / 1000) : window;
+
+      return { allowed: false, remaining: 0, resetIn };
+    }
+
+    // Add current request
+    await redis.zadd(key, now, `${now}-${Math.random()}`);
+    await redis.expire(key, window);
+
+    return {
+      allowed: true,
+      remaining: limits.rateLimit - count - 1,
+      resetIn: window,
+    };
+  } catch {
+    // If Redis is unavailable, allow request but with 0 remaining to signal degraded state
+    return { allowed: true, remaining: 0, resetIn: window };
   }
-
-  // Add current request
-  await redis.zadd(key, now, `${now}-${Math.random()}`);
-  await redis.expire(key, window);
-
-  return {
-    allowed: true,
-    remaining: limits.rateLimit - count - 1,
-    resetIn: window,
-  };
 }
 
 // Detect anomalies (usage spikes)

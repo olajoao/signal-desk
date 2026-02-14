@@ -1,6 +1,6 @@
 import type { FastifyInstance } from "fastify";
 import { prisma, type Prisma } from "@signaldesk/db";
-import { CreateRuleSchema } from "@signaldesk/shared";
+import { CreateRuleSchema, UpdateRuleSchema } from "@signaldesk/shared";
 import { canCreateRule } from "../services/limits.ts";
 import { requireRole } from "../plugins/rbac.ts";
 
@@ -102,17 +102,14 @@ export async function ruleRoutes(fastify: FastifyInstance) {
       return reply.status(404).send({ error: "Rule not found" });
     }
 
-    const updates = request.body as Partial<{
-      name: string;
-      enabled: boolean;
-      threshold: number;
-      windowSeconds: number;
-      cooldownSeconds: number;
-    }>;
+    const parsed = UpdateRuleSchema.safeParse(request.body);
+    if (!parsed.success) {
+      return reply.status(400).send({ error: "Invalid rule update", details: parsed.error.flatten() });
+    }
 
     const rule = await prisma.rule.update({
       where: { id },
-      data: updates,
+      data: parsed.data as Prisma.RuleUpdateInput,
     });
 
     return reply.send({

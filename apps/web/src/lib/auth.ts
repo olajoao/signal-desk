@@ -30,6 +30,7 @@ export async function signup(data: {
   const response = await fetch(`${API_URL}/auth/signup`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
+    credentials: "include",
     body: JSON.stringify(data),
   });
 
@@ -48,6 +49,7 @@ export async function login(data: {
   const response = await fetch(`${API_URL}/auth/login`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
+    credentials: "include",
     body: JSON.stringify(data),
   });
 
@@ -59,9 +61,13 @@ export async function login(data: {
   return response.json();
 }
 
-export async function getMe(token: string): Promise<{ user: User; org: Org | null }> {
+export async function getMe(token?: string): Promise<{ user: User; org: Org | null }> {
+  const headers: Record<string, string> = {};
+  if (token) headers["Authorization"] = `Bearer ${token}`;
+
   const response = await fetch(`${API_URL}/auth/me`, {
-    headers: { Authorization: `Bearer ${token}` },
+    headers,
+    credentials: "include",
   });
 
   if (!response.ok) {
@@ -72,12 +78,13 @@ export async function getMe(token: string): Promise<{ user: User; org: Org | nul
 }
 
 export async function refreshAccessToken(
-  token: string
+  token?: string
 ): Promise<{ accessToken: string; refreshToken: string }> {
   const response = await fetch(`${API_URL}/auth/refresh`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ refreshToken: token }),
+    credentials: "include",
+    body: JSON.stringify(token ? { refreshToken: token } : {}),
   });
 
   if (!response.ok) {
@@ -87,11 +94,11 @@ export async function refreshAccessToken(
   return response.json();
 }
 
-export async function logoutApi(token: string): Promise<void> {
+export async function logoutApi(): Promise<void> {
   await fetch(`${API_URL}/auth/logout`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ refreshToken: token }),
+    credentials: "include",
   }).catch(() => { });
 }
 
@@ -99,6 +106,7 @@ export async function forgotPassword(email: string): Promise<{ message: string }
   const response = await fetch(`${API_URL}/auth/forgot-password`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
+    credentials: "include",
     body: JSON.stringify({ email }),
   });
 
@@ -114,12 +122,29 @@ export async function resetPassword(token: string, password: string): Promise<{ 
   const response = await fetch(`${API_URL}/auth/reset-password`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
+    credentials: "include",
     body: JSON.stringify({ token, password }),
   });
 
   if (!response.ok) {
     const error = await response.json().catch(() => ({ error: "Reset failed" }));
     throw new Error(error.message ?? error.error ?? "Reset failed");
+  }
+
+  return response.json();
+}
+
+export async function getWsTicket(token?: string): Promise<{ ticket: string }> {
+  const headers: Record<string, string> = {};
+  if (token) headers["Authorization"] = `Bearer ${token}`;
+
+  const response = await fetch(`${API_URL}/auth/ws-ticket`, {
+    headers,
+    credentials: "include",
+  });
+
+  if (!response.ok) {
+    throw new Error("Failed to get WS ticket");
   }
 
   return response.json();
@@ -146,6 +171,7 @@ export async function acceptInvite(
   const response = await fetch(`${API_URL}/auth/accept-invite`, {
     method: "POST",
     headers,
+    credentials: "include",
     body: JSON.stringify({ token }),
   });
 

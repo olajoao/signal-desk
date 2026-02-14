@@ -3,6 +3,7 @@ import Redis from "ioredis";
 import { prisma, type Prisma } from "@signaldesk/db";
 import { getRedisConnection, notificationQueue, type EventJobData } from "@signaldesk/queue";
 import type { RuleAction } from "@signaldesk/shared";
+import { logger } from "../index.ts";
 
 const redis = new Redis(process.env.REDIS_URL ?? "redis://localhost:6379");
 
@@ -62,91 +63,109 @@ function evaluateCondition(condition: string, count: number, threshold: number):
   }
 }
 
+async function removeEventFromWindow(orgId: string, eventType: string, eventId: string): Promise<void> {
+  const key = `org:${orgId}:events:${eventType}`;
+  await redis.zrem(key, eventId);
+}
+
 async function processEvent(job: Job<EventJobData>): Promise<void> {
   const { eventId, type, metadata, timestamp, orgId } = job.data;
 
   // Add event to sliding window (scoped by org)
   await addEventToWindow(orgId, type, eventId, new Date(timestamp).getTime());
 
-  // Find matching rules for this org
-  const rules = await prisma.rule.findMany({
-    where: { eventType: type, enabled: true, orgId },
-  });
+  try {
+    // Find matching rules for this org
+    const rules = await prisma.rule.findMany({
+      where: { eventType: type, enabled: true, orgId },
+    });
 
-  for (const rule of rules) {
-    const ruleWithActions = rule as unknown as RuleWithActions;
+    // Collect all notifications to create
+    const notificationsToCreate: Array<{
+      ruleId: string;
+      channel: string;
+      payload: Prisma.InputJsonValue;
+    }> = [];
 
-    // Check cooldown
-    if (await isInCooldown(rule.id)) {
-      continue;
-    }
+    for (const rule of rules) {
+      const ruleWithActions = rule as unknown as RuleWithActions;
 
-    // Get count in window (scoped by org)
-    const count = await getEventCountInWindow(orgId, type, rule.windowSeconds);
+      if (await isInCooldown(rule.id)) continue;
 
-    // Evaluate condition
-    if (!evaluateCondition(rule.condition, count, rule.threshold)) {
-      continue;
-    }
+      const count = await getEventCountInWindow(orgId, type, rule.windowSeconds);
+      if (!evaluateCondition(rule.condition, count, rule.threshold)) continue;
 
-    // Set cooldown
-    await setCooldown(rule.id, rule.cooldownSeconds);
+      await setCooldown(rule.id, rule.cooldownSeconds);
 
-    // Create notifications for each action
-    const actions = ruleWithActions.actions;
-    for (const action of actions) {
-      const payload = {
-        ruleName: rule.name,
-        eventType: type,
-        eventMetadata: metadata,
-        threshold: rule.threshold,
-        windowSeconds: rule.windowSeconds,
-        count,
-        triggeredAt: new Date().toISOString(),
-        actionConfig: action.config,
-      } as Prisma.InputJsonValue;
-
-      const notification = await prisma.notification.create({
-        data: {
+      for (const action of ruleWithActions.actions) {
+        notificationsToCreate.push({
           ruleId: rule.id,
-          eventId,
           channel: action.channel,
-          payload,
-          orgId,
-        },
-      });
-
-      // Queue notification for delivery
-      await notificationQueue.add("send", {
-        notificationId: notification.id,
-        ruleId: rule.id,
-        eventId,
-        channel: action.channel as "webhook" | "discord" | "in_app" | "slack" | "email",
-        payload: notification.payload as Record<string, unknown>,
-        orgId,
-      });
+          payload: {
+            ruleName: rule.name,
+            eventType: type,
+            eventMetadata: metadata,
+            threshold: rule.threshold,
+            windowSeconds: rule.windowSeconds,
+            count,
+            triggeredAt: new Date().toISOString(),
+            actionConfig: action.config,
+          } as Prisma.InputJsonValue,
+        });
+      }
     }
-  }
 
-  // Mark event as processed
-  await prisma.event.update({
-    where: { id: eventId },
-    data: { processed: true },
-  });
+    // Batch create notifications + mark event processed in a transaction
+    if (notificationsToCreate.length > 0) {
+      const notifications = await prisma.$transaction(async (tx) => {
+        const created = await Promise.all(
+          notificationsToCreate.map((n) =>
+            tx.notification.create({
+              data: { ruleId: n.ruleId, eventId, channel: n.channel, payload: n.payload, orgId },
+            })
+          )
+        );
+        await tx.event.update({ where: { id: eventId }, data: { processed: true } });
+        return created;
+      });
+
+      // Queue all notifications for delivery
+      await notificationQueue.addBulk(
+        notifications.map((n, i) => ({
+          name: "send",
+          data: {
+            notificationId: n.id,
+            ruleId: notificationsToCreate[i]!.ruleId,
+            eventId,
+            channel: n.channel as "webhook" | "discord" | "in_app" | "slack" | "email",
+            payload: n.payload as Record<string, unknown>,
+            orgId,
+          },
+        }))
+      );
+    } else {
+      await prisma.event.update({ where: { id: eventId }, data: { processed: true } });
+    }
+  } catch (err) {
+    // Roll back Redis window entry on DB failure
+    await removeEventFromWindow(orgId, type, eventId).catch(() => {});
+    throw err;
+  }
 }
 
 export function startEventWorker(): Worker<EventJobData> {
   const worker = new Worker<EventJobData>("events", processEvent, {
     connection: getRedisConnection(),
     concurrency: 10,
+    lockDuration: 30000,
   });
 
   worker.on("completed", (job) => {
-    console.log(`Event ${job.data.eventId} processed`);
+    logger.info({ eventId: job.data.eventId }, "Event processed");
   });
 
   worker.on("failed", (job, err) => {
-    console.error(`Event ${job?.data.eventId} failed:`, err.message);
+    logger.error({ eventId: job?.data.eventId, error: err.message, attempt: job?.attemptsMade }, "Event processing failed");
   });
 
   return worker;

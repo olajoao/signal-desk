@@ -114,7 +114,7 @@ model Rule {
   updatedAt       DateTime       @updatedAt @map("updated_at")
   notifications   Notification[]
 
-  @@index([orgId, eventType])
+  @@index([orgId, eventType, enabled])
   @@index([orgId, enabled])
   @@map("rules")
 }
@@ -134,8 +134,8 @@ model Notification {
   error     String?
   createdAt DateTime     @default(now()) @map("created_at")
 
-  @@index([orgId, status])
-  @@index([orgId, channel])
+  @@index([orgId, status, channel])
+  @@index([orgId, createdAt])
   @@map("notifications")
 }
 
@@ -146,6 +146,7 @@ model ApiKey {
   keyHash    String       @unique @map("key_hash")
   prefix     String
   name       String
+  scopes     String[]     @default([]) // empty = full access; e.g. ["events:write","events:read","rules:read"]
   expiresAt  DateTime?    @map("expires_at")
   lastUsedAt DateTime?    @map("last_used_at")
   createdAt  DateTime     @default(now()) @map("created_at")
@@ -165,6 +166,7 @@ model RefreshToken {
   createdAt DateTime  @default(now()) @map("created_at")
 
   @@index([userId])
+  @@index([orgId])
   @@map("refresh_tokens")
 }
 
@@ -229,5 +231,6 @@ model SystemAlert {
   createdAt DateTime @default(now()) @map("created_at")
 
   @@index([resolved, createdAt])
+  @@index([orgId, type])
   @@map("system_alerts")
 }

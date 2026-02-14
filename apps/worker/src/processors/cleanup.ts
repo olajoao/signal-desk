@@ -1,9 +1,10 @@
 import { prisma } from "@signaldesk/db";
 import { reportOverageUsage } from "./stripe-usage.ts";
+import { logger } from "../index.ts";
 
 // Run cleanup for all organizations based on their plan's retention policy
 export async function runRetentionCleanup(): Promise<{ deleted: number; orgs: number }> {
-  console.log("[Cleanup] Starting retention cleanup...");
+  logger.info("[Cleanup] Starting retention cleanup...");
 
   // Get all orgs with their plan's retention days
   const orgs = await prisma.organization.findMany({
@@ -26,19 +27,19 @@ export async function runRetentionCleanup(): Promise<{ deleted: number; orgs: nu
     });
 
     if (result.count > 0) {
-      console.log(`[Cleanup] Deleted ${result.count} events for org ${org.slug} (retention: ${retentionDays} days)`);
+      logger.info(`[Cleanup] Deleted ${result.count} events for org ${org.slug} (retention: ${retentionDays} days)`);
       totalDeleted += result.count;
     }
   }
 
-  console.log(`[Cleanup] Completed. Total deleted: ${totalDeleted} events from ${orgs.length} orgs`);
+  logger.info(`[Cleanup] Completed. Total deleted: ${totalDeleted} events from ${orgs.length} orgs`);
 
   return { deleted: totalDeleted, orgs: orgs.length };
 }
 
 // Run anomaly check across all orgs
 export async function runAnomalyCheck(): Promise<void> {
-  console.log("[Anomaly] Checking for usage anomalies...");
+  logger.info("[Anomaly] Checking for usage anomalies...");
 
   // Find orgs with high activity today
   const orgs = await prisma.organization.findMany({
@@ -83,7 +84,7 @@ export async function runAnomalyCheck(): Promise<void> {
             },
           },
         });
-        console.log(`[Anomaly] Alert created for org ${org.slug}: high usage`);
+        logger.info(`[Anomaly] Alert created for org ${org.slug}: high usage`);
       }
     }
   }
@@ -91,7 +92,7 @@ export async function runAnomalyCheck(): Promise<void> {
 
 // Aggregate and sync usage from events table (fallback reconciliation)
 export async function reconcileUsage(): Promise<void> {
-  console.log("[Usage] Reconciling usage counts...");
+  logger.info("[Usage] Reconciling usage counts...");
 
   const periodStart = new Date(new Date().getFullYear(), new Date().getMonth(), 1);
   const periodEnd = new Date(new Date().getFullYear(), new Date().getMonth() + 1, 0, 23, 59, 59, 999);
@@ -144,10 +145,10 @@ export async function reconcileUsage(): Promise<void> {
     // Report overage to Stripe if applicable
     if (overageEvents > 0) {
       reportOverageUsage(org.id, overageEvents).catch((err) =>
-        console.error(`[Usage] Stripe overage report failed for ${org.id}:`, err.message)
+        logger.error(`[Usage] Stripe overage report failed for ${org.id}:`, err.message)
       );
     }
   }
 
-  console.log(`[Usage] Reconciled usage for ${orgs.length} orgs`);
+  logger.info(`[Usage] Reconciled usage for ${orgs.length} orgs`);
 }

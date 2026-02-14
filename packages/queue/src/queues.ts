@@ -20,8 +20,25 @@ export interface NotificationJobData {
 
 const connection = getRedisConnection();
 
-export const eventQueue = new Queue<EventJobData>("events", { connection });
-export const notificationQueue = new Queue<NotificationJobData>("notifications", { connection });
+const defaultJobOptions = {
+  attempts: 5,
+  backoff: { type: "exponential" as const, delay: 2000 },
+  removeOnComplete: { count: 1000 },
+  removeOnFail: { count: 5000 },
+};
+
+export const eventQueue = new Queue<EventJobData>("events", {
+  connection,
+  defaultJobOptions,
+});
+
+export const notificationQueue = new Queue<NotificationJobData>("notifications", {
+  connection,
+  defaultJobOptions: {
+    ...defaultJobOptions,
+    attempts: 3,
+  },
+});
 
 export const QUEUE_NAMES = {
   EVENTS: "events",

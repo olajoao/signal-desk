@@ -41,6 +41,7 @@ export async function apiKeyRoutes(fastify: FastifyInstance) {
         keyHash,
         prefix,
         expiresAt,
+        scopes: parsed.data.scopes,
         orgId: request.orgId,
       },
     });
@@ -50,6 +51,7 @@ export async function apiKeyRoutes(fastify: FastifyInstance) {
       name: apiKey.name,
       key, // plaintext, shown only once
       keyPrefix: prefix,
+      scopes: apiKey.scopes,
       expiresAt: apiKey.expiresAt?.toISOString() ?? null,
       createdAt: apiKey.createdAt.toISOString(),
     });
@@ -67,6 +69,7 @@ export async function apiKeyRoutes(fastify: FastifyInstance) {
         id: k.id,
         name: k.name,
         keyPrefix: k.prefix,
+        scopes: k.scopes,
         expiresAt: k.expiresAt?.toISOString() ?? null,
         lastUsedAt: k.lastUsedAt?.toISOString() ?? null,
         createdAt: k.createdAt.toISOString(),

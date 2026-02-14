@@ -9,7 +9,7 @@ import { acceptInvite, type AcceptInviteResponse } from "@/lib/auth";
 export default function AcceptInvitePage() {
   const searchParams = useSearchParams();
   const token = searchParams.get("token") ?? "";
-  const { token: accessToken, isLoading: authLoading } = useAuth();
+  const { isLoading: authLoading } = useAuth();
   const router = useRouter();
 
   const [error, setError] = useState("");
@@ -19,7 +19,7 @@ export default function AcceptInvitePage() {
   useEffect(() => {
     if (authLoading || !token) return;
 
-    acceptInvite(token, accessToken ?? undefined)
+    acceptInvite(token)
       .then((res) => {
         if (res.needsSignup) {
           // Redirect to signup with invite params
@@ -36,7 +36,7 @@ export default function AcceptInvitePage() {
         setError(err instanceof Error ? err.message : "Failed to accept invite");
       })
       .finally(() => setLoading(false));
-  }, [token, accessToken, authLoading, router]);
+  }, [token, authLoading, router]);
 
   if (!token) {
     return (

@@ -7,7 +7,7 @@ export async function sendPasswordResetEmail(to: string, token: string): Promise
   const apiKey = process.env.RESEND_API_KEY;
 
   if (!apiKey) {
-    console.log(`[RESET] ${to}: ${token}`);
+    console.log(`[EMAIL] Password reset email skipped (no RESEND_API_KEY)`);
     return;
   }
 
@@ -39,19 +39,13 @@ export async function sendInviteEmail(to: string, token: string, orgName: string
   const apiKey = process.env.RESEND_API_KEY;
 
   if (!apiKey) {
-    console.log(`[RESET] ${to}: ${token}`);
+    console.log(`[EMAIL] Invite email skipped (no RESEND_API_KEY)`);
     return;
   }
 
   const resend = new Resend(apiKey);
 
-
   const link = `${APP_URL}/invite/accept?token=${token}`;
-
-  if (!resend) {
-    console.log(`[INVITE] ${to}: ${link}`);
-    return;
-  }
 
   const { error } = await resend.emails.send({
     from: FROM,
