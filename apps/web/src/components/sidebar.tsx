@@ -48,7 +48,9 @@ function SidebarContent({ onNavigate }: { onNavigate?: () => void }) {
       </div>
       <nav className="flex-1 p-2">
         {navItems.map((item) => {
-          const isActive = pathname === item.href;
+          const isActive = item.href === "/settings"
+            ? pathname.startsWith("/settings")
+            : pathname === item.href;
           return (
             <Link
               key={item.href}
