@@ -17,6 +17,6 @@ COPY packages/ packages/
 COPY apps/worker/ apps/worker/
 
 # Generate Prisma client
-RUN cd packages/db && bunx prisma generate
+RUN cd packages/db && DATABASE_URL="postgresql://x:x@localhost:5432/x" bunx prisma generate
 
 CMD ["bun", "apps/worker/src/index.ts"]

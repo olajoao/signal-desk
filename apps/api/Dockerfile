@@ -17,7 +17,7 @@ COPY packages/ packages/
 COPY apps/api/ apps/api/
 
 # Generate Prisma client
-RUN cd packages/db && bunx prisma generate
+RUN cd packages/db && DATABASE_URL="postgresql://x:x@localhost:5432/x" bunx prisma generate
 
 EXPOSE 3001
 
