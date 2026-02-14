@@ -5,7 +5,7 @@ const isDev = process.env.NODE_ENV !== "production";
 const COOKIE_OPTIONS = {
   httpOnly: true,
   secure: !isDev,
-  sameSite: (isDev ? "lax" : "strict") as "lax" | "strict",
+  sameSite: (isDev ? "lax" : "none") as "lax" | "none",
   path: "/",
 } as const;
 
