@@ -34,8 +34,10 @@ export async function billingRoutes(fastify: FastifyInstance) {
       const url = await createCheckoutSession(request.orgId, planId, email);
       return reply.send({ url });
     } catch (err) {
-      request.log.error(err, "Checkout session failed");
-      return reply.status(502).send({ error: "Unable to start checkout. Please try again later." });
+      const msg = err instanceof Error ? err.message : String(err);
+      request.log.error({ err: msg }, "Checkout session failed");
+      // TODO: remove debug detail before going live
+      return reply.status(502).send({ error: "Unable to start checkout. Please try again later.", debug: msg });
     }
   });
 
