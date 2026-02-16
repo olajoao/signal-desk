@@ -115,7 +115,7 @@ export async function handleWebhookEvent(payload: string, signature: string): Pr
     throw new Error("STRIPE_WEBHOOK_SECRET not configured");
   }
 
-  const event = stripe.webhooks.constructEvent(payload, signature, STRIPE_WEBHOOK_SECRET);
+  const event = await stripe.webhooks.constructEventAsync(payload, signature, STRIPE_WEBHOOK_SECRET);
 
   switch (event.type) {
     case "checkout.session.completed": {

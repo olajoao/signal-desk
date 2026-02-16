@@ -30,8 +30,13 @@ export async function billingRoutes(fastify: FastifyInstance) {
       return reply.status(400).send({ error: "No billing email found" });
     }
 
-    const url = await createCheckoutSession(request.orgId, planId, email);
-    return reply.send({ url });
+    try {
+      const url = await createCheckoutSession(request.orgId, planId, email);
+      return reply.send({ url });
+    } catch (err) {
+      request.log.error(err, "Checkout session failed");
+      return reply.status(502).send({ error: "Unable to start checkout. Please try again later." });
+    }
   });
 
   // Get Stripe billing portal URL
