@@ -36,8 +36,7 @@ export async function billingRoutes(fastify: FastifyInstance) {
     } catch (err) {
       const msg = err instanceof Error ? err.message : String(err);
       request.log.error({ err: msg }, "Checkout session failed");
-      // TODO: remove debug detail before going live
-      return reply.status(502).send({ error: "Unable to start checkout. Please try again later.", debug: msg });
+      return reply.status(502).send({ error: "Unable to start checkout. Please try again later." });
     }
   });
 
