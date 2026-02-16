@@ -40,26 +40,26 @@ export default function AcceptInvitePage() {
 
   if (!token) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-zinc-950">
-        <div className="text-zinc-400">Missing invite token.</div>
+      <div className="min-h-screen flex items-center justify-center bg-[var(--background)]">
+        <div className="text-[var(--muted)]">Missing invite token.</div>
       </div>
     );
   }
 
   if (loading || authLoading) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-zinc-950">
-        <div className="text-zinc-400">Processing invite...</div>
+      <div className="min-h-screen flex items-center justify-center bg-[var(--background)]">
+        <div className="text-[var(--muted)]">Processing invite...</div>
       </div>
     );
   }
 
   if (error) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-zinc-950">
-        <div className="w-full max-w-md p-8 bg-zinc-900 rounded-lg border border-zinc-800 text-center">
+      <div className="min-h-screen flex items-center justify-center bg-[var(--background)]">
+        <div className="w-full max-w-md p-8 bg-[var(--card)] border-2 border-[var(--border-strong)] rounded text-center">
           <div className="text-red-400 mb-4">{error}</div>
-          <Link href="/login" className="text-blue-400 hover:text-blue-300 text-sm">
+          <Link href="/login" className="text-[var(--accent)] hover:text-[var(--accent-strong)] text-sm">
             Go to login
           </Link>
         </div>
@@ -69,15 +69,15 @@ export default function AcceptInvitePage() {
 
   if (result) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-zinc-950">
-        <div className="w-full max-w-md p-8 bg-zinc-900 rounded-lg border border-zinc-800 text-center">
-          <div className="text-green-400 mb-2">Invite accepted!</div>
-          <p className="text-zinc-400 text-sm mb-4">
+      <div className="min-h-screen flex items-center justify-center bg-[var(--background)]">
+        <div className="w-full max-w-md p-8 bg-[var(--card)] border-2 border-[var(--border-strong)] rounded text-center">
+          <div className="text-[var(--accent)] mb-2">Invite accepted!</div>
+          <p className="text-[var(--muted)] text-sm mb-4">
             You&apos;ve joined {result.org?.name} as {result.membership?.role}.
           </p>
           <button
             onClick={() => router.push("/dashboard")}
-            className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded transition-colors"
+            className="px-4 py-2 bg-[var(--accent)] hover:bg-[var(--accent-dim)] text-black rounded transition-colors"
           >
             Go to dashboard
           </button>

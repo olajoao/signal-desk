@@ -2,17 +2,17 @@
 
 function CodeBlock({ title, code }: { title: string; code: string }) {
   return (
-    <div className="bg-[var(--background)] rounded-lg overflow-hidden">
+    <div className="bg-[var(--surface)] rounded overflow-hidden">
       <div className="px-4 py-2 border-b border-[var(--border)] flex items-center justify-between">
-        <span className="text-xs text-gray-400">{title}</span>
+        <span className="text-xs text-[var(--muted)]">{title}</span>
         <button
           onClick={() => navigator.clipboard.writeText(code)}
-          className="text-xs text-gray-500 hover:text-white"
+          className="text-xs text-[var(--dim)] hover:text-[var(--foreground)]"
         >
           Copy
         </button>
       </div>
-      <pre className="p-4 text-xs overflow-x-auto text-gray-300">
+      <pre className="p-4 text-xs overflow-x-auto text-[var(--foreground)]">
         <code>{code}</code>
       </pre>
     </div>
@@ -30,12 +30,12 @@ export default function GuidePage() {
   return (
     <div className="space-y-6">
       {/* Integration Guide */}
-      <div className="bg-[var(--card)] border border-[var(--border)] rounded-lg">
+      <div className="bg-[var(--card)] border border-[var(--border)] rounded">
         <div className="p-4 border-b border-[var(--border)]">
           <h2 className="font-medium">Integration Guide</h2>
         </div>
         <div className="p-4">
-          <p className="text-sm text-gray-400 mb-4">
+          <p className="text-sm text-[var(--muted)] mb-4">
             Send events to SignalDesk whenever something important happens in your application. Use
             your API key in the Authorization header.
           </p>
@@ -128,35 +128,35 @@ except AuthError as e:
       </div>
 
       {/* Event Schema */}
-      <div className="bg-[var(--card)] border border-[var(--border)] rounded-lg">
+      <div className="bg-[var(--card)] border border-[var(--border)] rounded">
         <div className="p-4 border-b border-[var(--border)]">
           <h2 className="font-medium">Event Schema</h2>
         </div>
         <div className="p-4">
           <table className="w-full text-sm">
             <thead>
-              <tr className="text-left text-gray-400">
+              <tr className="text-left text-[13px] uppercase tracking-wider text-[var(--muted)]">
                 <th className="pb-2">Field</th>
                 <th className="pb-2">Type</th>
                 <th className="pb-2">Required</th>
                 <th className="pb-2">Description</th>
               </tr>
             </thead>
-            <tbody className="text-gray-300">
+            <tbody>
               <tr>
-                <td className="py-2 font-mono text-blue-400">type</td>
+                <td className="py-2 font-mono text-[var(--accent)]">type</td>
                 <td>string</td>
                 <td>Yes</td>
                 <td>Event type (e.g., &quot;payment_failed&quot;)</td>
               </tr>
               <tr>
-                <td className="py-2 font-mono text-blue-400">metadata</td>
+                <td className="py-2 font-mono text-[var(--accent)]">metadata</td>
                 <td>object</td>
                 <td>No</td>
                 <td>Additional data about the event</td>
               </tr>
               <tr>
-                <td className="py-2 font-mono text-blue-400">timestamp</td>
+                <td className="py-2 font-mono text-[var(--accent)]">timestamp</td>
                 <td>ISO 8601</td>
                 <td>No</td>
                 <td>Event time (defaults to now)</td>

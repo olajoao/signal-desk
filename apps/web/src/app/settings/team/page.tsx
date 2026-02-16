@@ -36,7 +36,7 @@ export default function TeamPage() {
   });
 
   return (
-    <div className="bg-[var(--card)] border border-[var(--border)] rounded-lg">
+    <div className="bg-[var(--card)] border border-[var(--border)] rounded">
       <div className="p-4 border-b border-[var(--border)]">
         <h2 className="font-medium">Team Members</h2>
       </div>
@@ -54,7 +54,7 @@ export default function TeamPage() {
               type="email"
               value={inviteEmail}
               onChange={(e) => setInviteEmail(e.target.value)}
-              className="flex-1 bg-[var(--background)] border border-[var(--border)] rounded px-3 py-2 text-sm"
+              className="flex-1 bg-[var(--background)] border border-[var(--border)] rounded px-3 py-2 text-sm focus:border-[var(--accent)] focus:outline-none"
               placeholder="Email address"
               required
             />
@@ -69,20 +69,20 @@ export default function TeamPage() {
             <button
               type="submit"
               disabled={inviteMutation.isPending}
-              className="bg-[var(--primary)] text-white px-4 py-2 rounded text-sm hover:bg-[var(--primary)]/80 disabled:opacity-50"
+              className="bg-[var(--accent)] text-black px-4 py-2 rounded text-sm font-medium hover:bg-[var(--accent-dim)] disabled:opacity-50"
             >
               {inviteMutation.isPending ? "Inviting..." : "Invite"}
             </button>
           </form>
           {inviteMutation.isError && (
-            <p className="text-xs text-red-400 mt-2">
+            <p className="text-xs text-[var(--error)] mt-2">
               {inviteMutation.error instanceof Error
                 ? inviteMutation.error.message
                 : "Invite failed"}
             </p>
           )}
           {inviteMutation.isSuccess && (
-            <p className="text-xs text-green-400 mt-2">
+            <p className="text-xs text-[var(--success)] mt-2">
               Invite sent! Check the server console for the token.
             </p>
           )}
@@ -94,15 +94,15 @@ export default function TeamPage() {
           <div key={m.id} className="p-4 flex items-center justify-between">
             <div>
               <div className="font-medium">{m.name ?? m.email}</div>
-              <div className="text-sm text-gray-500">
+              <div className="text-sm text-[var(--dim)]">
                 {m.email} &middot;{" "}
                 <span
                   className={
                     m.role === "owner"
-                      ? "text-yellow-400"
+                      ? "text-[var(--warning)]"
                       : m.role === "admin"
-                      ? "text-blue-400"
-                      : "text-gray-400"
+                      ? "text-[var(--accent)]"
+                      : "text-[var(--muted)]"
                   }
                 >
                   {m.role}
@@ -112,7 +112,7 @@ export default function TeamPage() {
             {isOwner && m.userId !== user?.id && (
               <button
                 onClick={() => setRemoveTarget({ id: m.id, name: m.name ?? m.email })}
-                className="text-gray-400 hover:text-[var(--error)] text-sm"
+                className="text-[var(--muted)] hover:text-[var(--error)] text-sm"
               >
                 Remove
               </button>

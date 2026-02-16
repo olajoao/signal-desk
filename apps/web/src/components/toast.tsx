@@ -22,16 +22,16 @@ function ToastContainer({ toasts, onDismiss }: { toasts: Toast[]; onDismiss: (id
       {toasts.map((toast) => (
         <div
           key={toast.id}
-          className={`px-4 py-3 rounded-lg shadow-lg text-sm flex items-center gap-2 animate-in slide-in-from-right ${
+          className={`px-4 py-3 rounded-none text-[13px] font-medium flex items-center gap-2 animate-in slide-in-from-right ${
             toast.type === "success"
-              ? "bg-green-600 text-white"
-              : "bg-red-600 text-white"
+              ? "bg-[var(--success)] text-black"
+              : "bg-[var(--error)] text-white"
           }`}
         >
           <span className="flex-1">{toast.message}</span>
           <button
             onClick={() => onDismiss(toast.id)}
-            className="text-white/70 hover:text-white"
+            className="opacity-70 hover:opacity-100"
           >
             &times;
           </button>

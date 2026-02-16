@@ -35,14 +35,14 @@ export default function PlansPage() {
 
   const plan = usageData?.plan;
 
-  if (!plansData) return <div className="text-gray-400">Loading...</div>;
+  if (!plansData) return <div className="text-[var(--muted)]">Loading...</div>;
 
   const tierOrder = ["free", "pro", "max"] as const;
   const currentTierIdx = tierOrder.indexOf((plan?.id ?? "free") as typeof tierOrder[number]);
   const overageInfo: Record<string, { label: string; className: string }> = {
-    free: { label: "Hard limit — events rejected", className: "text-red-400" },
-    pro: { label: "$1 per 1,000 overage events", className: "text-gray-400" },
-    max: { label: "$0.50 per 1,000 overage events", className: "text-gray-400" },
+    free: { label: "Hard limit — events rejected", className: "text-[var(--error)]" },
+    pro: { label: "$1 per 1,000 overage events", className: "text-[var(--muted)]" },
+    max: { label: "$0.50 per 1,000 overage events", className: "text-[var(--muted)]" },
   };
 
   return (
@@ -52,7 +52,7 @@ export default function PlansPage() {
           <button
             onClick={() => portalMutation.mutate()}
             disabled={portalMutation.isPending}
-            className="text-sm text-gray-400 hover:text-white"
+            className="text-sm text-[var(--muted)] hover:text-[var(--foreground)]"
           >
             {portalMutation.isPending ? "Loading..." : "Manage Billing"}
           </button>
@@ -65,7 +65,6 @@ export default function PlansPage() {
           .map((p) => {
             const isCurrent = p.id === plan?.id;
             const isPro = p.id === "pro";
-            const isMax = p.id === "max";
             const planTierIdx = tierOrder.indexOf(p.id as typeof tierOrder[number]);
             const isUpgrade =
               !isCurrent && p.id !== "free" && (planTierIdx === -1 || planTierIdx > currentTierIdx);
@@ -80,29 +79,19 @@ export default function PlansPage() {
             return (
               <div
                 key={p.id}
-                className={`relative flex flex-col flex-1 min-w-0 rounded-xl p-6 transition-all ${
+                className={`relative flex flex-col flex-1 min-w-0 rounded p-6 ${
                   isPro
-                    ? "bg-gradient-to-b from-blue-500/10 to-purple-500/10 border-2 border-transparent scale-[1.02] shadow-lg"
-                    : isMax
-                    ? "bg-[var(--card)] border-2 border-purple-500/40"
+                    ? "bg-[var(--accent-muted)] border-2 border-[var(--accent)]"
                     : "bg-[var(--card)] border border-[var(--border)]"
                 }`}
-                style={
-                  isPro
-                    ? {
-                        borderImage: "linear-gradient(to bottom, #3b82f6, #a855f7) 1",
-                        borderImageSlice: 1,
-                      }
-                    : undefined
-                }
               >
                 {isPro && (
-                  <span className="absolute -top-3 left-1/2 -translate-x-1/2 text-xs font-semibold px-3 py-1 rounded-full bg-gradient-to-r from-blue-500 to-purple-500 text-white">
+                  <span className="absolute -top-3 left-1/2 -translate-x-1/2 text-xs font-semibold uppercase tracking-wider px-3 py-1 bg-[var(--accent)] text-black">
                     Most Popular
                   </span>
                 )}
                 {isCurrent && (
-                  <span className="absolute -top-3 right-4 text-xs font-medium px-3 py-1 rounded-full bg-green-500/20 text-green-400 border border-green-500/30">
+                  <span className="absolute -top-3 right-4 text-xs font-medium px-3 py-1 bg-[var(--success)]/20 text-[var(--success)] border border-[var(--success)]/30">
                     Current Plan
                   </span>
                 )}
@@ -110,15 +99,15 @@ export default function PlansPage() {
                 <h3 className="text-lg font-semibold mt-1">{p.displayName}</h3>
 
                 <div className="mt-3 mb-5">
-                  <span className="text-3xl font-bold">${(p.priceMonthly / 100).toFixed(0)}</span>
-                  <span className="text-sm text-gray-400 ml-1">/mo</span>
+                  <span className="text-3xl font-black font-mono">${(p.priceMonthly / 100).toFixed(0)}</span>
+                  <span className="text-sm text-[var(--muted)] ml-1">/mo</span>
                 </div>
 
                 <ul className="space-y-2.5 mb-5 flex-1">
                   {features.map((f) => (
-                    <li key={f} className="flex items-start gap-2 text-sm text-gray-300">
+                    <li key={f} className="flex items-start gap-2 text-sm text-[var(--foreground)]">
                       <svg
-                        className="w-4 h-4 mt-0.5 shrink-0 text-green-400"
+                        className="w-4 h-4 mt-0.5 shrink-0 text-[var(--accent)]"
                         fill="none"
                         viewBox="0 0 24 24"
                         stroke="currentColor"
@@ -150,16 +139,12 @@ export default function PlansPage() {
                 </ul>
 
                 {isCurrent ? (
-                  <div className="text-center text-sm text-gray-500 py-2.5">Current Plan</div>
+                  <div className="text-center text-sm text-[var(--dim)] py-2.5">Current Plan</div>
                 ) : isUpgrade ? (
                   <button
                     onClick={() => checkoutMutation.mutate(p.id)}
                     disabled={checkoutMutation.isPending}
-                    className={`w-full py-2.5 rounded-lg font-semibold text-white transition-opacity disabled:opacity-50 ${
-                      isPro
-                        ? "bg-gradient-to-r from-blue-500 to-purple-500 text-base py-3"
-                        : "bg-purple-600 hover:bg-purple-500"
-                    }`}
+                    className="w-full py-2.5 rounded font-semibold transition-opacity disabled:opacity-50 bg-[var(--accent)] text-black hover:bg-[var(--accent-dim)]"
                   >
                     {checkoutMutation.isPending
                       ? "Redirecting..."
@@ -171,7 +156,7 @@ export default function PlansPage() {
           })}
       </div>
       {checkoutMutation.isError && (
-        <p className="text-xs text-red-400 mt-4">
+        <p className="text-xs text-[var(--error)] mt-4">
           {checkoutMutation.error instanceof Error
             ? checkoutMutation.error.message
             : "Checkout failed"}

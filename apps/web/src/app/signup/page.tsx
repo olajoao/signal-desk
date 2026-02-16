@@ -43,9 +43,9 @@ export default function SignupPage() {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-zinc-950">
-      <div className="w-full max-w-md p-8 bg-zinc-900 rounded-lg border border-zinc-800">
-        <h1 className="text-2xl font-bold text-white mb-6">
+    <div className="min-h-screen flex items-center justify-center bg-[var(--background)]">
+      <div className="w-full max-w-md p-8 bg-[var(--card)] border-2 border-[var(--border-strong)] rounded">
+        <h1 className="text-2xl font-bold mb-6">
           {inviteToken ? "Accept invite" : "Create your account"}
         </h1>
 
@@ -58,12 +58,12 @@ export default function SignupPage() {
         <form onSubmit={handleSubmit} className="space-y-4">
           {!inviteToken && (
             <div>
-              <label className="block text-sm font-medium text-zinc-400 mb-1">Organization name</label>
+              <label className="block text-[13px] font-semibold uppercase tracking-wider text-[var(--muted)] mb-1">Organization name</label>
               <input
                 type="text"
                 value={orgName}
                 onChange={(e) => setOrgName(e.target.value)}
-                className="w-full px-3 py-2 bg-zinc-800 border border-zinc-700 rounded text-white placeholder-zinc-500 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className="w-full px-3 py-2 bg-[var(--background)] border border-[var(--border)] rounded text-[var(--foreground)] placeholder-[var(--dim)] focus:border-[var(--accent)] focus:outline-none"
                 placeholder="Acme Inc"
                 required
               />
@@ -71,23 +71,23 @@ export default function SignupPage() {
           )}
 
           <div>
-            <label className="block text-sm font-medium text-zinc-400 mb-1">Your name (optional)</label>
+            <label className="block text-[13px] font-semibold uppercase tracking-wider text-[var(--muted)] mb-1">Your name (optional)</label>
             <input
               type="text"
               value={name}
               onChange={(e) => setName(e.target.value)}
-              className="w-full px-3 py-2 bg-zinc-800 border border-zinc-700 rounded text-white placeholder-zinc-500 focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="w-full px-3 py-2 bg-[var(--background)] border border-[var(--border)] rounded text-[var(--foreground)] placeholder-[var(--dim)] focus:border-[var(--accent)] focus:outline-none"
               placeholder="John Doe"
             />
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-zinc-400 mb-1">Email</label>
+            <label className="block text-[13px] font-semibold uppercase tracking-wider text-[var(--muted)] mb-1">Email</label>
             <input
               type="email"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
-              className="w-full px-3 py-2 bg-zinc-800 border border-zinc-700 rounded text-white placeholder-zinc-500 focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="w-full px-3 py-2 bg-[var(--background)] border border-[var(--border)] rounded text-[var(--foreground)] placeholder-[var(--dim)] focus:border-[var(--accent)] focus:outline-none"
               placeholder="you@company.com"
               required
               readOnly={!!inviteToken}
@@ -95,12 +95,12 @@ export default function SignupPage() {
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-zinc-400 mb-1">Password</label>
+            <label className="block text-[13px] font-semibold uppercase tracking-wider text-[var(--muted)] mb-1">Password</label>
             <input
               type="password"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
-              className="w-full px-3 py-2 bg-zinc-800 border border-zinc-700 rounded text-white placeholder-zinc-500 focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="w-full px-3 py-2 bg-[var(--background)] border border-[var(--border)] rounded text-[var(--foreground)] placeholder-[var(--dim)] focus:border-[var(--accent)] focus:outline-none"
               placeholder="Min 8 characters"
               minLength={8}
               required
@@ -110,15 +110,15 @@ export default function SignupPage() {
           <button
             type="submit"
             disabled={loading}
-            className="w-full py-2 px-4 bg-blue-600 hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed text-white font-medium rounded transition-colors"
+            className="w-full py-2 px-4 bg-[var(--accent)] hover:bg-[var(--accent-dim)] disabled:opacity-50 disabled:cursor-not-allowed text-black font-medium rounded transition-colors"
           >
             {loading ? "Creating account..." : inviteToken ? "Join organization" : "Create account"}
           </button>
         </form>
 
-        <p className="mt-6 text-center text-sm text-zinc-400">
+        <p className="mt-6 text-center text-sm text-[var(--muted)]">
           Already have an account?{" "}
-          <Link href="/login" className="text-blue-400 hover:text-blue-300">
+          <Link href="/login" className="text-[var(--accent)] hover:text-[var(--accent-strong)]">
             Sign in
           </Link>
         </p>

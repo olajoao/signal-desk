@@ -31,9 +31,9 @@ export default function LoginPage() {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-zinc-950">
-      <div className="w-full max-w-md p-8 bg-zinc-900 rounded-lg border border-zinc-800">
-        <h1 className="text-2xl font-bold text-white mb-6">Sign in to SignalDesk</h1>
+    <div className="min-h-screen flex items-center justify-center bg-[var(--background)]">
+      <div className="w-full max-w-md p-8 bg-[var(--card)] border-2 border-[var(--border-strong)] rounded">
+        <h1 className="text-2xl font-bold mb-6">Sign in to SignalDesk</h1>
 
         {error && (
           <div className="mb-4 p-3 bg-red-500/10 border border-red-500/20 rounded text-red-400 text-sm">
@@ -43,24 +43,24 @@ export default function LoginPage() {
 
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
-            <label className="block text-sm font-medium text-zinc-400 mb-1">Email</label>
+            <label className="block text-[13px] font-semibold uppercase tracking-wider text-[var(--muted)] mb-1">Email</label>
             <input
               type="email"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
-              className="w-full px-3 py-2 bg-zinc-800 border border-zinc-700 rounded text-white placeholder-zinc-500 focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="w-full px-3 py-2 bg-[var(--background)] border border-[var(--border)] rounded text-[var(--foreground)] placeholder-[var(--dim)] focus:border-[var(--accent)] focus:outline-none"
               placeholder="you@company.com"
               required
             />
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-zinc-400 mb-1">Password</label>
+            <label className="block text-[13px] font-semibold uppercase tracking-wider text-[var(--muted)] mb-1">Password</label>
             <input
               type="password"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
-              className="w-full px-3 py-2 bg-zinc-800 border border-zinc-700 rounded text-white placeholder-zinc-500 focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="w-full px-3 py-2 bg-[var(--background)] border border-[var(--border)] rounded text-[var(--foreground)] placeholder-[var(--dim)] focus:border-[var(--accent)] focus:outline-none"
               placeholder="••••••••"
               required
             />
@@ -69,21 +69,21 @@ export default function LoginPage() {
           <button
             type="submit"
             disabled={loading}
-            className="w-full py-2 px-4 bg-blue-600 hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed text-white font-medium rounded transition-colors"
+            className="w-full py-2 px-4 bg-[var(--accent)] hover:bg-[var(--accent-dim)] disabled:opacity-50 disabled:cursor-not-allowed text-black font-medium rounded transition-colors"
           >
             {loading ? "Signing in..." : "Sign in"}
           </button>
         </form>
 
         <div className="mt-4 text-center">
-          <Link href="/forgot-password" className="text-sm text-zinc-500 hover:text-zinc-300">
+          <Link href="/forgot-password" className="text-sm text-[var(--dim)] hover:text-[var(--muted)]">
             Forgot password?
           </Link>
         </div>
 
-        <p className="mt-4 text-center text-sm text-zinc-400">
+        <p className="mt-4 text-center text-sm text-[var(--muted)]">
           Don&apos;t have an account?{" "}
-          <Link href="/signup" className="text-blue-400 hover:text-blue-300">
+          <Link href="/signup" className="text-[var(--accent)] hover:text-[var(--accent-strong)]">
             Sign up
           </Link>
         </p>

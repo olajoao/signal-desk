@@ -37,7 +37,7 @@ export default function RulesPage() {
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ["rules"] }),
   });
 
-  if (authLoading || !user) return <div className="text-gray-400">Loading...</div>;
+  if (authLoading || !user) return <div className="text-[var(--muted)]">Loading...</div>;
 
   return (
     <div>
@@ -45,7 +45,7 @@ export default function RulesPage() {
         <h1 className="text-2xl font-semibold">Rules</h1>
         <button
           onClick={() => setIsCreating(true)}
-          className="bg-[var(--primary)] text-white px-4 py-2 rounded-lg hover:bg-[var(--primary)]/80"
+          className="bg-[var(--accent)] text-black px-4 py-2 rounded font-medium hover:bg-[var(--accent-dim)]"
         >
           New Rule
         </button>
@@ -60,11 +60,11 @@ export default function RulesPage() {
         />
       )}
 
-      <div className="bg-[var(--card)] border border-[var(--border)] rounded-lg">
+      <div className="bg-[var(--card)] border border-[var(--border)] rounded">
         {isLoading ? (
-          <div className="p-4 text-gray-400">Loading rules...</div>
+          <div className="p-4 text-[var(--muted)]">Loading rules...</div>
         ) : data?.rules.length === 0 ? (
-          <div className="p-4 text-gray-400">No rules created yet.</div>
+          <div className="p-4 text-[var(--muted)]">No rules created yet.</div>
         ) : (
           <div className="divide-y divide-[var(--border)]">
             {data?.rules.map((rule) => (
@@ -76,7 +76,7 @@ export default function RulesPage() {
                         toggleMutation.mutate({ id: rule.id, enabled: !rule.enabled })
                       }
                       className={`w-10 h-6 rounded-full transition-colors ${
-                        rule.enabled ? "bg-[var(--success)]" : "bg-gray-600"
+                        rule.enabled ? "bg-[var(--accent)]" : "bg-[var(--border-strong)]"
                       }`}
                     >
                       <div
@@ -89,16 +89,16 @@ export default function RulesPage() {
                   </div>
                   <button
                     onClick={() => setDeleteTarget(rule)}
-                    className="text-gray-400 hover:text-[var(--error)]"
+                    className="text-[var(--muted)] hover:text-[var(--error)]"
                   >
                     Delete
                   </button>
                 </div>
-                <div className="text-sm text-gray-400">
-                  When <span className="text-[var(--primary)]">{rule.eventType}</span>{" "}
+                <div className="text-sm text-[var(--muted)]">
+                  When <span className="text-[var(--accent)] font-mono">{rule.eventType}</span>{" "}
                   {rule.condition.replace("_", " ")} {rule.threshold} times in {rule.windowSeconds}s
                 </div>
-                <div className="text-xs text-gray-500 mt-1">
+                <div className="text-xs text-[var(--dim)] mt-1">
                   Actions: {rule.actions.map((a) => a.channel).join(", ")} | Cooldown:{" "}
                   {rule.cooldownSeconds}s
                 </div>
@@ -182,7 +182,7 @@ function CreateRuleForm({
   return (
     <form
       onSubmit={handleSubmit}
-      className="bg-[var(--card)] border border-[var(--border)] rounded-lg p-4 mb-6"
+      className="bg-[var(--card)] border border-[var(--border)] rounded p-4 mb-6"
     >
       {error && (
         <div className="mb-4 p-3 bg-red-500/10 border border-red-500/20 rounded text-red-400 text-sm">
@@ -191,32 +191,32 @@ function CreateRuleForm({
       )}
       <div className="grid grid-cols-2 gap-4 mb-4">
         <div>
-          <label className="block text-sm text-gray-400 mb-1">Rule Name</label>
+          <label className="block text-[13px] font-semibold uppercase tracking-wider text-[var(--muted)] mb-1">Rule Name</label>
           <input
             type="text"
             value={form.name}
             onChange={(e) => setForm({ ...form, name: e.target.value })}
-            className="w-full bg-[var(--background)] border border-[var(--border)] rounded px-3 py-2"
+            className="w-full bg-[var(--background)] border border-[var(--border)] rounded px-3 py-2 focus:border-[var(--accent)] focus:outline-none"
             required
           />
         </div>
         <div>
-          <label className="block text-sm text-gray-400 mb-1">Event Type</label>
+          <label className="block text-[13px] font-semibold uppercase tracking-wider text-[var(--muted)] mb-1">Event Type</label>
           <input
             type="text"
             value={form.eventType}
             onChange={(e) => setForm({ ...form, eventType: e.target.value })}
-            className="w-full bg-[var(--background)] border border-[var(--border)] rounded px-3 py-2"
+            className="w-full bg-[var(--background)] border border-[var(--border)] rounded px-3 py-2 focus:border-[var(--accent)] focus:outline-none"
             placeholder="checkout_failed"
             required
           />
         </div>
         <div>
-          <label className="block text-sm text-gray-400 mb-1">Condition</label>
+          <label className="block text-[13px] font-semibold uppercase tracking-wider text-[var(--muted)] mb-1">Condition</label>
           <select
             value={form.condition}
             onChange={(e) => setForm({ ...form, condition: e.target.value })}
-            className="w-full bg-[var(--background)] border border-[var(--border)] rounded px-3 py-2"
+            className="w-full bg-[var(--background)] border border-[var(--border)] rounded px-3 py-2 focus:border-[var(--accent)] focus:outline-none"
           >
             <option value="count_gte">Count &gt;= Threshold</option>
             <option value="count_gt">Count &gt; Threshold</option>
@@ -224,35 +224,35 @@ function CreateRuleForm({
           </select>
         </div>
         <div>
-          <label className="block text-sm text-gray-400 mb-1">Threshold</label>
+          <label className="block text-[13px] font-semibold uppercase tracking-wider text-[var(--muted)] mb-1">Threshold</label>
           <input
             type="number"
             value={form.threshold}
             onChange={(e) => setForm({ ...form, threshold: Number(e.target.value) })}
-            className="w-full bg-[var(--background)] border border-[var(--border)] rounded px-3 py-2"
+            className="w-full bg-[var(--background)] border border-[var(--border)] rounded px-3 py-2 focus:border-[var(--accent)] focus:outline-none"
             min={1}
             required
           />
         </div>
         <div>
-          <label className="block text-sm text-gray-400 mb-1">Window (seconds)</label>
+          <label className="block text-[13px] font-semibold uppercase tracking-wider text-[var(--muted)] mb-1">Window (seconds)</label>
           <input
             type="number"
             value={form.windowSeconds}
             onChange={(e) => setForm({ ...form, windowSeconds: Number(e.target.value) })}
-            className="w-full bg-[var(--background)] border border-[var(--border)] rounded px-3 py-2"
+            className="w-full bg-[var(--background)] border border-[var(--border)] rounded px-3 py-2 focus:border-[var(--accent)] focus:outline-none"
             min={1}
             max={86400}
             required
           />
         </div>
         <div>
-          <label className="block text-sm text-gray-400 mb-1">Cooldown (seconds)</label>
+          <label className="block text-[13px] font-semibold uppercase tracking-wider text-[var(--muted)] mb-1">Cooldown (seconds)</label>
           <input
             type="number"
             value={form.cooldownSeconds}
             onChange={(e) => setForm({ ...form, cooldownSeconds: Number(e.target.value) })}
-            className="w-full bg-[var(--background)] border border-[var(--border)] rounded px-3 py-2"
+            className="w-full bg-[var(--background)] border border-[var(--border)] rounded px-3 py-2 focus:border-[var(--accent)] focus:outline-none"
             min={0}
             required
           />
@@ -260,45 +260,45 @@ function CreateRuleForm({
       </div>
 
       <div className="mb-4">
-        <label className="block text-sm text-gray-400 mb-1">Discord Webhook URL</label>
+        <label className="block text-[13px] font-semibold uppercase tracking-wider text-[var(--muted)] mb-1">Discord Webhook URL</label>
         <input
           type="url"
           value={form.discordWebhookUrl}
           onChange={(e) => setForm({ ...form, discordWebhookUrl: e.target.value })}
-          className="w-full bg-[var(--background)] border border-[var(--border)] rounded px-3 py-2"
+          className="w-full bg-[var(--background)] border border-[var(--border)] rounded px-3 py-2 focus:border-[var(--accent)] focus:outline-none"
           placeholder="https://discord.com/api/webhooks/..."
         />
       </div>
 
       <div className="mb-4">
-        <label className="block text-sm text-gray-400 mb-1">Slack Webhook URL</label>
+        <label className="block text-[13px] font-semibold uppercase tracking-wider text-[var(--muted)] mb-1">Slack Webhook URL</label>
         <input
           type="url"
           value={form.slackWebhookUrl}
           onChange={(e) => setForm({ ...form, slackWebhookUrl: e.target.value })}
-          className="w-full bg-[var(--background)] border border-[var(--border)] rounded px-3 py-2"
+          className="w-full bg-[var(--background)] border border-[var(--border)] rounded px-3 py-2 focus:border-[var(--accent)] focus:outline-none"
           placeholder="https://hooks.slack.com/services/..."
         />
       </div>
 
       <div className="mb-4">
-        <label className="block text-sm text-gray-400 mb-1">Email Alert Address</label>
+        <label className="block text-[13px] font-semibold uppercase tracking-wider text-[var(--muted)] mb-1">Email Alert Address</label>
         <input
           type="email"
           value={form.emailTo}
           onChange={(e) => setForm({ ...form, emailTo: e.target.value })}
-          className="w-full bg-[var(--background)] border border-[var(--border)] rounded px-3 py-2"
+          className="w-full bg-[var(--background)] border border-[var(--border)] rounded px-3 py-2 focus:border-[var(--accent)] focus:outline-none"
           placeholder="alerts@example.com"
         />
       </div>
 
       <div className="mb-4">
-        <label className="block text-sm text-gray-400 mb-1">Generic Webhook URL</label>
+        <label className="block text-[13px] font-semibold uppercase tracking-wider text-[var(--muted)] mb-1">Generic Webhook URL</label>
         <input
           type="url"
           value={form.webhookUrl}
           onChange={(e) => setForm({ ...form, webhookUrl: e.target.value })}
-          className="w-full bg-[var(--background)] border border-[var(--border)] rounded px-3 py-2"
+          className="w-full bg-[var(--background)] border border-[var(--border)] rounded px-3 py-2 focus:border-[var(--accent)] focus:outline-none"
           placeholder="https://..."
         />
       </div>
@@ -310,7 +310,7 @@ function CreateRuleForm({
             checked={form.inApp}
             onChange={(e) => setForm({ ...form, inApp: e.target.checked })}
           />
-          <span className="text-sm text-gray-400">In-app notification</span>
+          <span className="text-sm text-[var(--muted)]">In-app notification</span>
         </label>
       </div>
 
@@ -318,7 +318,7 @@ function CreateRuleForm({
         <button
           type="submit"
           disabled={isLoading}
-          className="bg-[var(--primary)] text-white px-4 py-2 rounded hover:bg-[var(--primary)]/80 disabled:opacity-50"
+          className="bg-[var(--accent)] text-black px-4 py-2 rounded font-medium hover:bg-[var(--accent-dim)] disabled:opacity-50"
         >
           {isLoading ? "Creating..." : "Create Rule"}
         </button>

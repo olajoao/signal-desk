@@ -26,10 +26,10 @@ export default function SettingsLayout({ children }: { children: React.ReactNode
               <Link
                 key={item.href}
                 href={item.href}
-                className={`block px-3 py-2 rounded-lg text-sm transition-colors ${
+                className={`block px-3 py-2 rounded-none text-[13px] font-medium transition-colors ${
                   isActive
-                    ? "bg-[var(--primary)] text-white"
-                    : "text-gray-400 hover:text-white hover:bg-white/5"
+                    ? "border-l-2 border-[var(--accent)] bg-[var(--accent-muted)] text-[var(--foreground)]"
+                    : "border-l-2 border-transparent text-[var(--muted)] hover:text-[var(--foreground)] hover:bg-white/5"
                 }`}
               >
                 {item.label}

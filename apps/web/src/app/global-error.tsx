@@ -15,16 +15,16 @@ export default function GlobalError({
   }, [error]);
   return (
     <html lang="en">
-      <body className="antialiased bg-zinc-950 text-white">
+      <body className="antialiased bg-[#050505] text-[#e8e8e8]">
         <div className="flex h-screen items-center justify-center">
           <div className="text-center max-w-md">
             <h2 className="text-xl font-semibold mb-2">Something went wrong</h2>
-            <p className="text-gray-400 mb-4 text-sm">
+            <p className="text-[#737373] mb-4 text-sm">
               {error.digest ? "A critical error occurred." : (error.message || "A critical error occurred.")}
             </p>
             <button
               onClick={reset}
-              className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700"
+              className="bg-[#2dd4bf] text-black px-4 py-2 rounded font-medium hover:bg-[#14b8a6]"
             >
               Try again
             </button>

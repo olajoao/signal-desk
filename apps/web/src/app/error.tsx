@@ -17,12 +17,12 @@ export default function Error({
     <div className="flex h-screen items-center justify-center">
       <div className="text-center max-w-md">
         <h2 className="text-xl font-semibold mb-2">Something went wrong</h2>
-        <p className="text-gray-400 mb-4 text-sm">
+        <p className="text-[var(--muted)] mb-4 text-sm">
           {error.digest ? "An unexpected error occurred." : (error.message || "An unexpected error occurred.")}
         </p>
         <button
           onClick={reset}
-          className="bg-[var(--primary)] text-white px-4 py-2 rounded hover:bg-[var(--primary)]/80"
+          className="bg-[var(--accent)] text-black px-4 py-2 rounded font-medium hover:bg-[var(--accent-dim)]"
         >
           Try again
         </button>

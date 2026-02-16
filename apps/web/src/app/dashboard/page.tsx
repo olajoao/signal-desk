@@ -54,12 +54,12 @@ function StatCard({
 }: {
   label: string;
   value: number | string;
-  accent: "primary" | "success" | "warning";
+  accent: "accent" | "success" | "warning";
 }) {
   return (
-    <div className="bg-[var(--card)] border border-[var(--border)] rounded-lg p-4">
-      <p className="text-sm text-gray-400 mb-1">{label}</p>
-      <p className={`text-2xl font-semibold text-[var(--${accent})]`}>{value}</p>
+    <div className="bg-[var(--card)] border border-[var(--border)] rounded p-4">
+      <p className="text-[13px] uppercase tracking-wider text-[var(--muted)] mb-1">{label}</p>
+      <p className={`text-3xl font-black font-mono text-[var(--${accent})]`}>{value}</p>
     </div>
   );
 }
@@ -185,7 +185,7 @@ export default function DashboardPage() {
   }, [liveNotifications, notificationsData]);
 
   if (authLoading || !user) {
-    return <div className="text-gray-400">Loading...</div>;
+    return <div className="text-[var(--muted)]">Loading...</div>;
   }
 
   const activeRules = rulesData?.rules.filter((r) => r.enabled).length ?? 0;
@@ -201,7 +201,7 @@ export default function DashboardPage() {
           <span
             className={`w-2 h-2 rounded-full ${isConnected ? "bg-[var(--success)]" : "bg-[var(--error)]"}`}
           />
-          <span className="text-sm text-gray-400">
+          <span className="text-sm text-[var(--muted)]">
             {isConnected ? "Connected" : "Disconnected"}
           </span>
         </div>
@@ -210,10 +210,10 @@ export default function DashboardPage() {
       {/* Usage Warning Banners */}
       {usageData && usageData.usage.events.percentUsed >= 80 && (
         <div
-          className={`rounded-lg p-3 mb-6 text-sm ${
+          className={`p-3 mb-6 text-sm border-l-2 ${
             usageData.usage.events.percentUsed >= 100
-              ? "bg-red-500/10 border border-red-500/20 text-red-400"
-              : "bg-yellow-500/10 border border-yellow-500/20 text-yellow-400"
+              ? "border-[var(--error)] bg-[var(--error)]/10 text-[var(--error)]"
+              : "border-[var(--warning)] bg-[var(--warning)]/10 text-[var(--warning)]"
           }`}
         >
           {usageData.usage.events.percentUsed >= 100 ? (
@@ -238,39 +238,39 @@ export default function DashboardPage() {
 
       {/* Stat Cards */}
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-6">
-        <StatCard label="Events (period)" value={eventsUsed} accent="primary" />
+        <StatCard label="Events (period)" value={eventsUsed} accent="accent" />
         <StatCard label="Active Rules" value={activeRules} accent="success" />
         <StatCard label="Notifications" value={notifCount} accent="warning" />
       </div>
 
       {/* Recent Alerts */}
-      <div className="bg-[var(--card)] border border-[var(--border)] rounded-lg mb-6">
+      <div className="bg-[var(--card)] border border-[var(--border)] rounded mb-6">
         <div className="p-4 border-b border-[var(--border)]">
           <h2 className="font-medium">Recent Alerts</h2>
         </div>
         {mergedNotifications.length === 0 ? (
-          <div className="p-4 text-gray-400">No alerts yet.</div>
+          <div className="p-4 text-[var(--muted)]">No alerts yet.</div>
         ) : (
           <div className="divide-y divide-[var(--border)]">
             {mergedNotifications.slice(0, 10).map((n) => (
               <div key={n.id} className="p-4 hover:bg-white/5 flex items-center justify-between gap-4">
                 <div className="flex items-center gap-3 min-w-0">
                   <span className="font-medium truncate">{n.ruleName}</span>
-                  <span className="font-mono text-xs bg-[var(--primary)]/20 text-[var(--primary)] px-2 py-0.5 rounded shrink-0">
+                  <span className="font-mono text-xs bg-[var(--accent-muted)] text-[var(--accent)] px-2 py-0.5 rounded-none shrink-0">
                     {n.eventType}
                   </span>
                 </div>
-                <div className="flex items-center gap-3 shrink-0 text-sm text-gray-400">
+                <div className="flex items-center gap-3 shrink-0 text-sm text-[var(--muted)]">
                   {n.count != null && n.threshold != null && (
-                    <span>
+                    <span className="font-mono">
                       {n.count}/{n.threshold}
                       {n.windowSeconds != null && (
-                        <span className="text-gray-500"> in {n.windowSeconds}s</span>
+                        <span className="text-[var(--dim)]"> in {n.windowSeconds}s</span>
                       )}
                     </span>
                   )}
-                  <span className="text-xs bg-white/10 px-2 py-0.5 rounded">{n.channel}</span>
-                  <span className="text-xs text-gray-500">{timeAgo(n.time)}</span>
+                  <span className="text-xs bg-white/10 px-2 py-0.5 rounded-none font-mono">{n.channel}</span>
+                  <span className="text-xs text-[var(--dim)] font-mono">{timeAgo(n.time)}</span>
                 </div>
               </div>
             ))}
@@ -279,14 +279,14 @@ export default function DashboardPage() {
       </div>
 
       {/* Live Events */}
-      <div className="bg-[var(--card)] border border-[var(--border)] rounded-lg">
+      <div className="bg-[var(--card)] border border-[var(--border)] rounded">
         <div className="p-4 border-b border-[var(--border)] flex items-center justify-between">
           <h2 className="font-medium">Live Events</h2>
           {allEventTypes.length > 1 && (
             <select
               value={typeFilter}
               onChange={(e) => setTypeFilter(e.target.value)}
-              className="text-sm bg-[var(--background)] border border-[var(--border)] rounded px-2 py-1 text-gray-300"
+              className="text-sm bg-[var(--background)] border border-[var(--border)] rounded-none font-mono px-2 py-1"
             >
               <option value="">All types</option>
               {allEventTypes.map((t) => (
@@ -299,9 +299,9 @@ export default function DashboardPage() {
         </div>
 
         {eventsLoading ? (
-          <div className="p-4 text-gray-400">Loading events...</div>
+          <div className="p-4 text-[var(--muted)]">Loading events...</div>
         ) : filteredEvents.length === 0 ? (
-          <div className="p-4 text-gray-400">
+          <div className="p-4 text-[var(--muted)]">
             {typeFilter ? "No events matching this type." : "No events yet. Send some events to see them here."}
           </div>
         ) : (
@@ -309,14 +309,14 @@ export default function DashboardPage() {
             {filteredEvents.slice(0, 50).map((event) => (
               <div key={event.id} className="p-4 hover:bg-white/5">
                 <div className="flex items-center justify-between mb-2">
-                  <span className="font-mono text-sm bg-[var(--primary)]/20 text-[var(--primary)] px-2 py-0.5 rounded">
+                  <span className="font-mono text-sm bg-[var(--accent-muted)] text-[var(--accent)] px-2 py-0.5 rounded-none">
                     {event.type}
                   </span>
-                  <span className="text-xs text-gray-500">
+                  <span className="text-xs text-[var(--dim)] font-mono">
                     {new Date(event.timestamp).toLocaleTimeString()}
                   </span>
                 </div>
-                <pre className="text-xs text-gray-400 overflow-x-auto">
+                <pre className="text-xs text-[var(--muted)] overflow-x-auto">
                   {JSON.stringify(event.metadata, null, 2)}
                 </pre>
               </div>

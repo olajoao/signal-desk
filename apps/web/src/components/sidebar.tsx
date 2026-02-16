@@ -42,9 +42,12 @@ function SidebarContent({ onNavigate }: { onNavigate?: () => void }) {
 
   return (
     <>
-      <div className="p-4 border-b border-[var(--border)]">
-        <h1 className="text-lg font-semibold">SignalDesk</h1>
-        {org && <p className="text-xs text-gray-500 mt-1">{org.name}</p>}
+      <div className="p-4 border-b border-[var(--border-strong)]">
+        <h1 className="text-lg font-bold tracking-tight">
+          <span>SIGNAL</span>
+          <span className="text-[var(--accent)]">DESK</span>
+        </h1>
+        {org && <p className="text-xs text-[var(--dim)] mt-1">{org.name}</p>}
       </div>
       <nav className="flex-1 p-2">
         {navItems.map((item) => {
@@ -56,10 +59,10 @@ function SidebarContent({ onNavigate }: { onNavigate?: () => void }) {
               key={item.href}
               href={item.href}
               onClick={onNavigate}
-              className={`flex items-center gap-3 px-3 py-2 rounded-lg mb-1 transition-colors ${
+              className={`flex items-center gap-3 px-3 py-2 rounded-none mb-1 transition-colors ${
                 isActive
-                  ? "bg-[var(--primary)] text-white"
-                  : "text-gray-400 hover:text-white hover:bg-white/5"
+                  ? "border-l-2 border-[var(--accent)] bg-[var(--accent-muted)] text-[var(--foreground)]"
+                  : "border-l-2 border-transparent text-[var(--muted)] hover:text-[var(--foreground)] hover:bg-white/5"
               }`}
             >
               {icons[item.icon]}
@@ -69,11 +72,11 @@ function SidebarContent({ onNavigate }: { onNavigate?: () => void }) {
         })}
       </nav>
       {user && (
-        <div className="p-4 border-t border-[var(--border)]">
-          <div className="text-sm text-gray-400 mb-2 truncate">{user.email}</div>
+        <div className="p-4 border-t border-[var(--border-strong)]">
+          <div className="text-sm text-[var(--dim)] mb-2 truncate">{user.email}</div>
           <button
             onClick={logout}
-            className="text-sm text-gray-500 hover:text-white transition-colors"
+            className="text-sm text-[var(--dim)] hover:text-[var(--accent)] transition-colors"
           >
             Sign out
           </button>
@@ -85,7 +88,7 @@ function SidebarContent({ onNavigate }: { onNavigate?: () => void }) {
 
 export function Sidebar() {
   return (
-    <aside className="hidden md:flex w-56 border-r border-[var(--border)] bg-[var(--card)] flex-col">
+    <aside className="hidden md:flex w-56 border-r border-[var(--border-strong)] bg-[var(--surface)] flex-col">
       <SidebarContent />
     </aside>
   );
@@ -97,7 +100,7 @@ export function MobileNav({ open, onClose }: { open: boolean; onClose: () => voi
   return (
     <>
       <div className="fixed inset-0 bg-black/50 z-40 md:hidden" onClick={onClose} />
-      <aside className="fixed inset-y-0 left-0 w-56 bg-[var(--card)] border-r border-[var(--border)] z-50 flex flex-col md:hidden">
+      <aside className="fixed inset-y-0 left-0 w-56 bg-[var(--surface)] border-r border-[var(--border-strong)] z-50 flex flex-col md:hidden">
         <SidebarContent onNavigate={onClose} />
       </aside>
     </>

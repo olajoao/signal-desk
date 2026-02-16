@@ -26,10 +26,10 @@ export default function ForgotPasswordPage() {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-zinc-950">
-      <div className="w-full max-w-md p-8 bg-zinc-900 rounded-lg border border-zinc-800">
-        <h1 className="text-2xl font-bold text-white mb-2">Reset password</h1>
-        <p className="text-sm text-zinc-400 mb-6">
+    <div className="min-h-screen flex items-center justify-center bg-[var(--background)]">
+      <div className="w-full max-w-md p-8 bg-[var(--card)] border-2 border-[var(--border-strong)] rounded">
+        <h1 className="text-2xl font-bold mb-2">Reset password</h1>
+        <p className="text-sm text-[var(--muted)] mb-6">
           Enter your email and we&apos;ll send you a reset link.
         </p>
 
@@ -37,7 +37,7 @@ export default function ForgotPasswordPage() {
           <div className="p-4 bg-green-500/10 border border-green-500/20 rounded text-green-400 text-sm">
             If an account exists for {email}, a reset link has been sent. Check your inbox.
             <div className="mt-4">
-              <Link href="/login" className="text-blue-400 hover:text-blue-300">
+              <Link href="/login" className="text-[var(--accent)] hover:text-[var(--accent-strong)]">
                 Back to login
               </Link>
             </div>
@@ -52,12 +52,12 @@ export default function ForgotPasswordPage() {
 
             <form onSubmit={handleSubmit} className="space-y-4">
               <div>
-                <label className="block text-sm font-medium text-zinc-400 mb-1">Email</label>
+                <label className="block text-[13px] font-semibold uppercase tracking-wider text-[var(--muted)] mb-1">Email</label>
                 <input
                   type="email"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
-                  className="w-full px-3 py-2 bg-zinc-800 border border-zinc-700 rounded text-white placeholder-zinc-500 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  className="w-full px-3 py-2 bg-[var(--background)] border border-[var(--border)] rounded text-[var(--foreground)] placeholder-[var(--dim)] focus:border-[var(--accent)] focus:outline-none"
                   placeholder="you@company.com"
                   required
                 />
@@ -66,14 +66,14 @@ export default function ForgotPasswordPage() {
               <button
                 type="submit"
                 disabled={loading}
-                className="w-full py-2 px-4 bg-blue-600 hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed text-white font-medium rounded transition-colors"
+                className="w-full py-2 px-4 bg-[var(--accent)] hover:bg-[var(--accent-dim)] disabled:opacity-50 disabled:cursor-not-allowed text-black font-medium rounded transition-colors"
               >
                 {loading ? "Sending..." : "Send reset link"}
               </button>
             </form>
 
-            <p className="mt-6 text-center text-sm text-zinc-400">
-              <Link href="/login" className="text-blue-400 hover:text-blue-300">
+            <p className="mt-6 text-center text-sm text-[var(--muted)]">
+              <Link href="/login" className="text-[var(--accent)] hover:text-[var(--accent-strong)]">
                 Back to login
               </Link>
             </p>

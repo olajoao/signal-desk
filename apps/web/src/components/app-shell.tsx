@@ -30,8 +30,8 @@ export function AppShell({ children }: { children: React.ReactNode }) {
 
   if (isLoading) {
     return (
-      <div className="flex h-screen items-center justify-center bg-zinc-950">
-        <div className="text-gray-400">Loading...</div>
+      <div className="flex h-screen items-center justify-center bg-[var(--background)]">
+        <div className="text-[var(--muted)]">Loading...</div>
       </div>
     );
   }
@@ -56,16 +56,18 @@ export function AppShell({ children }: { children: React.ReactNode }) {
       <MobileNav open={mobileNavOpen} onClose={() => setMobileNavOpen(false)} />
       <div className="flex-1 flex flex-col overflow-hidden">
         {/* Mobile header */}
-        <header className="md:hidden flex items-center gap-3 p-4 border-b border-[var(--border)] bg-[var(--card)]">
+        <header className="md:hidden flex items-center gap-3 p-4 border-b border-[var(--border-strong)] bg-[var(--surface)]">
           <button
             onClick={() => setMobileNavOpen(true)}
-            className="text-gray-400 hover:text-white"
+            className="text-[var(--muted)] hover:text-[var(--foreground)]"
           >
             <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
             </svg>
           </button>
-          <span className="font-semibold">SignalDesk</span>
+          <span className="font-bold uppercase tracking-tight">
+            SIGNAL<span className="text-[var(--accent)]">DESK</span>
+          </span>
         </header>
         <main className="flex-1 overflow-auto p-6">{children}</main>
       </div>

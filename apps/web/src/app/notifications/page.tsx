@@ -23,7 +23,7 @@ export default function NotificationsPage() {
     refetchInterval: 10000,
   });
 
-  if (authLoading || !user) return <div className="text-gray-400">Loading...</div>;
+  if (authLoading || !user) return <div className="text-[var(--muted)]">Loading...</div>;
 
   const statusColors: Record<string, string> = {
     sent: "bg-[var(--success)]",
@@ -44,7 +44,7 @@ export default function NotificationsPage() {
             setStatusFilter(e.target.value);
             setPage(0);
           }}
-          className="text-sm bg-[var(--background)] border border-[var(--border)] rounded px-2 py-1 text-gray-300"
+          className="text-sm bg-[var(--background)] border border-[var(--border)] rounded-none font-mono px-2 py-1"
         >
           <option value="">All statuses</option>
           <option value="sent">Sent</option>
@@ -53,11 +53,11 @@ export default function NotificationsPage() {
         </select>
       </div>
 
-      <div className="bg-[var(--card)] border border-[var(--border)] rounded-lg">
+      <div className="bg-[var(--card)] border border-[var(--border)] rounded">
         {isLoading ? (
-          <div className="p-4 text-gray-400">Loading notifications...</div>
+          <div className="p-4 text-[var(--muted)]">Loading notifications...</div>
         ) : notifications.length === 0 ? (
-          <div className="p-4 text-gray-400">No notifications yet.</div>
+          <div className="p-4 text-[var(--muted)]">No notifications yet.</div>
         ) : (
           <div className="divide-y divide-[var(--border)]">
             {notifications.map((notification) => (
@@ -65,26 +65,26 @@ export default function NotificationsPage() {
                 <div className="flex items-center justify-between mb-2">
                   <div className="flex items-center gap-3">
                     <span
-                      className={`w-2 h-2 rounded-full ${statusColors[notification.status] ?? "bg-gray-500"}`}
+                      className={`w-2 h-2 rounded-full ${statusColors[notification.status] ?? "bg-[var(--dim)]"}`}
                     />
                     <span className="font-medium">{notification.ruleName}</span>
-                    <span className="text-sm text-gray-500 bg-white/5 px-2 py-0.5 rounded">
+                    <span className="text-sm text-[var(--dim)] bg-white/5 px-2 py-0.5 rounded-none font-mono">
                       {notification.channel}
                     </span>
                   </div>
-                  <span className="text-xs text-gray-500">
+                  <span className="text-xs text-[var(--dim)] font-mono">
                     {new Date(notification.createdAt).toLocaleString()}
                   </span>
                 </div>
-                <div className="text-sm text-gray-400">
+                <div className="text-sm text-[var(--muted)]">
                   Triggered by{" "}
-                  <span className="text-[var(--primary)]">{notification.eventType}</span> event
+                  <span className="text-[var(--accent)] font-mono">{notification.eventType}</span> event
                 </div>
                 {notification.error && (
                   <div className="mt-2 text-sm text-[var(--error)]">{notification.error}</div>
                 )}
                 {notification.sentAt && (
-                  <div className="mt-1 text-xs text-gray-500">
+                  <div className="mt-1 text-xs text-[var(--dim)]">
                     Sent at {new Date(notification.sentAt).toLocaleString()}
                   </div>
                 )}
@@ -100,15 +100,15 @@ export default function NotificationsPage() {
           <button
             onClick={() => setPage((p) => Math.max(0, p - 1))}
             disabled={page === 0}
-            className="px-3 py-1 text-sm border border-[var(--border)] rounded disabled:opacity-30 hover:bg-white/5"
+            className="px-3 py-1 text-sm border border-[var(--border)] rounded-none disabled:opacity-30 hover:bg-white/5"
           >
             Previous
           </button>
-          <span className="text-sm text-gray-400">Page {page + 1}</span>
+          <span className="text-sm text-[var(--muted)] font-mono">Page {page + 1}</span>
           <button
             onClick={() => setPage((p) => p + 1)}
             disabled={!hasMore}
-            className="px-3 py-1 text-sm border border-[var(--border)] rounded disabled:opacity-30 hover:bg-white/5"
+            className="px-3 py-1 text-sm border border-[var(--border)] rounded-none disabled:opacity-30 hover:bg-white/5"
           >
             Next
           </button>
