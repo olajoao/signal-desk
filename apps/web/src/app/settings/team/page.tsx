@@ -4,12 +4,14 @@ import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { getMembers, inviteMember, removeMember } from "@/lib/api";
 import { useAuth } from "@/components/auth-provider";
+import { ConfirmDialog } from "@/components/confirm-dialog";
 
 export default function TeamPage() {
   const { user, org } = useAuth();
   const queryClient = useQueryClient();
   const [inviteEmail, setInviteEmail] = useState("");
   const [inviteRole, setInviteRole] = useState("member");
+  const [removeTarget, setRemoveTarget] = useState<{ id: string; name: string } | null>(null);
 
   const isOwner = org?.role === "owner";
 
@@ -109,7 +111,7 @@ export default function TeamPage() {
             </div>
             {isOwner && m.userId !== user?.id && (
               <button
-                onClick={() => removeMemberMutation.mutate(m.id)}
+                onClick={() => setRemoveTarget({ id: m.id, name: m.name ?? m.email })}
                 className="text-gray-400 hover:text-[var(--error)] text-sm"
               >
                 Remove
@@ -118,6 +120,19 @@ export default function TeamPage() {
           </div>
         ))}
       </div>
+
+      <ConfirmDialog
+        open={!!removeTarget}
+        title="Remove Member"
+        description={`Remove "${removeTarget?.name}" from the team? They will lose access immediately.`}
+        confirmLabel="Remove"
+        destructive
+        onConfirm={() => {
+          if (removeTarget) removeMemberMutation.mutate(removeTarget.id);
+          setRemoveTarget(null);
+        }}
+        onCancel={() => setRemoveTarget(null)}
+      />
     </div>
   );
 }

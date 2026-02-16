@@ -4,6 +4,7 @@ import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { getApiKeys, createApiKey, deleteApiKey } from "@/lib/api";
 import { useAuth } from "@/components/auth-provider";
+import { ConfirmDialog } from "@/components/confirm-dialog";
 
 const ALL_SCOPES = [
   "events:read",
@@ -22,6 +23,7 @@ export default function ApiKeysPage() {
   const [newKeyExpiry, setNewKeyExpiry] = useState("never");
   const [newKeyScopes, setNewKeyScopes] = useState<string[]>([]);
   const [showNewKey, setShowNewKey] = useState<string | null>(null);
+  const [deleteTarget, setDeleteTarget] = useState<{ id: string; name: string } | null>(null);
 
   const isOwner = org?.role === "owner";
   const isAdmin = org?.role === "admin" || isOwner;
@@ -199,7 +201,7 @@ export default function ApiKeysPage() {
                 </div>
                 {isAdmin && (
                   <button
-                    onClick={() => deleteMutation.mutate(key.id)}
+                    onClick={() => setDeleteTarget({ id: key.id, name: key.name })}
                     className="text-gray-400 hover:text-[var(--error)]"
                   >
                     Delete
@@ -210,6 +212,19 @@ export default function ApiKeysPage() {
           </div>
         )}
       </div>
+
+      <ConfirmDialog
+        open={!!deleteTarget}
+        title="Delete API Key"
+        description={`Delete "${deleteTarget?.name}"? This cannot be undone.`}
+        confirmLabel="Delete"
+        destructive
+        onConfirm={() => {
+          if (deleteTarget) deleteMutation.mutate(deleteTarget.id);
+          setDeleteTarget(null);
+        }}
+        onCancel={() => setDeleteTarget(null)}
+      />
     </div>
   );
 }

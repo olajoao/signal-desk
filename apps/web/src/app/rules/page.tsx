@@ -4,11 +4,13 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useState } from "react";
 import { getRules, createRule, deleteRule, updateRule, type RuleItem } from "@/lib/api";
 import { useAuth } from "@/components/auth-provider";
+import { ConfirmDialog } from "@/components/confirm-dialog";
 
 export default function RulesPage() {
   const { user, isLoading: authLoading } = useAuth();
   const queryClient = useQueryClient();
   const [isCreating, setIsCreating] = useState(false);
+  const [deleteTarget, setDeleteTarget] = useState<RuleItem | null>(null);
 
   const { data, isLoading } = useQuery({
     queryKey: ["rules"],
@@ -86,7 +88,7 @@ export default function RulesPage() {
                     <span className="font-medium">{rule.name}</span>
                   </div>
                   <button
-                    onClick={() => deleteMutation.mutate(rule.id)}
+                    onClick={() => setDeleteTarget(rule)}
                     className="text-gray-400 hover:text-[var(--error)]"
                   >
                     Delete
@@ -105,6 +107,19 @@ export default function RulesPage() {
           </div>
         )}
       </div>
+
+      <ConfirmDialog
+        open={!!deleteTarget}
+        title="Delete Rule"
+        description={`Delete "${deleteTarget?.name}"? This cannot be undone.`}
+        confirmLabel="Delete"
+        destructive
+        onConfirm={() => {
+          if (deleteTarget) deleteMutation.mutate(deleteTarget.id);
+          setDeleteTarget(null);
+        }}
+        onCancel={() => setDeleteTarget(null)}
+      />
     </div>
   );
 }
