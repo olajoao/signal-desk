@@ -7,6 +7,7 @@ import {
   getUsage,
   getRules,
   getNotifications,
+  getApiKeys,
   type EventItem,
   type NotificationItem,
 } from "@/lib/api";
@@ -98,6 +99,13 @@ export default function DashboardPage() {
     enabled: !!user,
     staleTime: 10_000,
     refetchInterval: 15_000,
+  });
+
+  const { data: apiKeysData } = useQuery({
+    queryKey: ["apiKeys", user?.id],
+    queryFn: () => getApiKeys(),
+    enabled: !!user,
+    staleTime: 60_000,
   });
 
   const handleMessage = useCallback(
@@ -231,7 +239,7 @@ export default function DashboardPage() {
 
       {/* Onboarding */}
       <OnboardingChecklist
-        hasApiKey={(eventsData?.events.length ?? 0) > 0 || liveEvents.length > 0}
+        hasApiKey={(apiKeysData?.apiKeys.length ?? 0) > 0}
         hasRule={(rulesData?.rules.length ?? 0) > 0}
         hasEvent={(eventsData?.events.length ?? 0) > 0 || liveEvents.length > 0}
       />
