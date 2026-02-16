@@ -28,9 +28,12 @@ async function tryRefresh(): Promise<{ accessToken: string; refreshToken: string
 
 async function fetchApi<T>(endpoint: string, options: RequestInit = {}): Promise<T> {
   const headers: Record<string, string> = {
-    "Content-Type": "application/json",
     ...(options.headers as Record<string, string>),
   };
+
+  if (options.body) {
+    headers["Content-Type"] = "application/json";
+  }
 
   const token = getAccessToken();
   if (token) {
