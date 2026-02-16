@@ -1,5 +1,12 @@
 @import "tailwindcss";
 
+@font-face {
+  font-family: "PT Root UI";
+  src: url("/fonts/pt-root-ui_vf.woff2") format("woff2");
+  font-weight: 300 700;
+  font-display: swap;
+}
+
 :root {
   --background: #0a0a0a;
   --foreground: #ededed;
@@ -14,5 +21,5 @@
 body {
   background: var(--background);
   color: var(--foreground);
-  font-family: system-ui, -apple-system, sans-serif;
+  font-family: "PT Root UI", system-ui, -apple-system, sans-serif;
 }
