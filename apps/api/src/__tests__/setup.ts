@@ -73,6 +73,21 @@ export async function cleanDb() {
     prisma.organization.deleteMany(),
     prisma.user.deleteMany(),
   ]);
+
+  // Ensure "free" plan exists (required FK for Organization.planId default)
+  await prisma.plan.upsert({
+    where: { id: "free" },
+    update: {},
+    create: {
+      id: "free",
+      name: "free",
+      displayName: "Free",
+      eventsPerMonth: 100,
+      rulesLimit: 3,
+      retentionDays: 7,
+      rateLimit: 30,
+    },
+  });
 }
 
 interface TestUser {
