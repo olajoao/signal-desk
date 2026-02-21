@@ -8,7 +8,7 @@ Monitor events, define smart rules, and get instant notifications — all in one
 
 Production deployment overview — Next.js frontend, Fastify API, background worker, backed by Postgres and Redis with persistent volumes.
 
-![Infrastructure overview](docs/infrastructure.png)
+![Infrastructure overview](docs/infrastructure.webp)
 
 ## Architecture
 
