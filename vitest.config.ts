@@ -5,6 +5,8 @@ export default defineConfig({
     globals: true,
     testTimeout: 15000,
     hookTimeout: 15000,
+    // Run test files sequentially — integration tests share a DB
+    fileParallelism: false,
     // Skip integration tests (need DATABASE_URL) in default run
     exclude: [
       "**/node_modules/**",

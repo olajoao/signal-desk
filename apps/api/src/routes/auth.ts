@@ -1,6 +1,7 @@
 import type { FastifyInstance } from "fastify";
 import { prisma } from "@signaldesk/db";
 import { randomBytes, createHash } from "crypto";
+import bcrypt from "bcryptjs";
 import {
   SignupSchema,
   LoginSchema,
@@ -68,7 +69,7 @@ export async function authRoutes(fastify: FastifyInstance) {
       return reply.status(409).send({ error: "Email already registered" });
     }
 
-    const passwordHash = await Bun.password.hash(password, { algorithm: "bcrypt" });
+    const passwordHash = await bcrypt.hash(password, 10);
 
     // If invite token provided, join invited org instead of creating new one
     if (inviteToken) {
@@ -162,7 +163,7 @@ export async function authRoutes(fastify: FastifyInstance) {
       return reply.status(401).send({ error: "Invalid credentials" });
     }
 
-    const valid = await Bun.password.verify(password, user.passwordHash);
+    const valid = await bcrypt.compare(password, user.passwordHash);
     if (!valid) {
       return reply.status(401).send({ error: "Invalid credentials" });
     }
@@ -338,7 +339,7 @@ export async function authRoutes(fastify: FastifyInstance) {
       return reply.status(400).send({ error: "Invalid or expired reset token" });
     }
 
-    const passwordHash = await Bun.password.hash(parsed.data.password, { algorithm: "bcrypt" });
+    const passwordHash = await bcrypt.hash(parsed.data.password, 10);
 
     await prisma.$transaction([
       prisma.user.update({ where: { id: resetToken.userId }, data: { passwordHash } }),
