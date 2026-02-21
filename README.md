@@ -4,6 +4,12 @@ Real-time activity, alerts & insights platform for modern engineering teams.
 
 Monitor events, define smart rules, and get instant notifications — all in one place. Think: GitHub notifications + Datadog events + Slack alerts — simplified and opinionated.
 
+## Infrastructure
+
+Production deployment overview — Next.js frontend, Fastify API, background worker, backed by Postgres and Redis with persistent volumes.
+
+![Infrastructure overview](docs/infrastructure.png)
+
 ## Architecture
 
 ```
